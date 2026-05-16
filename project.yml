@@ -1,0 +1,80 @@
+name: KeyMore
+options:
+  bundleIdPrefix: com.rudironsoni
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  KeyMoreCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Sources/KeyMoreCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rudironsoni.KeyMoreCore
+        GENERATE_INFOPLIST_FILE: YES
+
+  KeyMore:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - target: KeyMoreCore
+      - target: KeyMoreKeyboard
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rudironsoni.KeyMore
+        INFOPLIST_FILE: App/Info.plist
+        PRODUCT_NAME: KeyMore
+
+  KeyMoreKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: KeyboardExtension
+    dependencies:
+      - target: KeyMoreCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rudironsoni.KeyMore.Keyboard
+        INFOPLIST_FILE: KeyboardExtension/Info.plist
+        PRODUCT_NAME: KeyMoreKeyboard
+        APPLICATION_EXTENSION_API_ONLY: YES
+
+  KeyMoreCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/KeyMoreCoreTests
+    dependencies:
+      - target: KeyMoreCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rudironsoni.KeyMoreCoreTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  KeyMore:
+    build:
+      targets:
+        KeyMore: all
+        KeyMoreCore: all
+        KeyMoreKeyboard: all
+    test:
+      targets:
+        - KeyMoreCoreTests
+  KeyMoreCore:
+    build:
+      targets:
+        KeyMoreCore: all
+    test:
+      targets:
+        - KeyMoreCoreTests

@@ -1,0 +1,755 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		053B5F646F593774C71F3671 /* PrivatePathProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDD2F5AEBCEA3FFFB9F17E9 /* PrivatePathProbe.swift */; };
+		0996AB6EC6BBD07E545CA581 /* DiagnosticLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2DFFF46A954D7AD80D8285 /* DiagnosticLog.swift */; };
+		0C5EF936F6FAFC8D70DC5C4A /* HIDBridgeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */; };
+		179F39A90CFED329233F7D2A /* KeyboardActionResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */; };
+		17D1AD26A3146A553C310714 /* SpecialKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC315B6FDAC39C64AAE71E3 /* SpecialKey.swift */; };
+		1BF4EF4B5786B9678363BFBD /* KeyMoreKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 28185ACB64EEC499404AABED /* KeyMoreKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1C7374D8492C439EDD74F5DA /* KeyMoreCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; };
+		428438751A85E7B13688818C /* KeyMoreCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4587C7941ED6F5CEDFFCA07E /* PrivatePathProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199922E4E0FA6C2FED8725C2 /* PrivatePathProbeTests.swift */; };
+		4826ADC60704F63E476D4A7D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5CA568CEBB3952EF435F4B /* AppDelegate.swift */; };
+		61683D1D62E6588493F7D485 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */; };
+		6598AA0E76B3346C3D7785A5 /* FeasibilityMatrixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24FB69D385F6876D74F5585 /* FeasibilityMatrixTests.swift */; };
+		740700C7B42298202F36E15B /* HIDKeyboardReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */; };
+		75AB2C4B0C64FE6F8C9B7FB7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0630CD7F7770148DB2E2CE1D /* SceneDelegate.swift */; };
+		A02D9887103F2FA162A195E0 /* HIDBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */; };
+		A77869C7FBDE744F7159690C /* Feasibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D0C2EDCE916D48D988705 /* Feasibility.swift */; };
+		AB146ADAFC20178E45FC093B /* HIDKeyboardReportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */; };
+		ACC52D647C01E6B31702EBE4 /* KeyMoreCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; };
+		B52CEE2A82BCD8925478F688 /* ParityRouteMatrixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */; };
+		C210CDBC801DE24651FDFDCE /* HIDBridgeCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */; };
+		C9ABDBB2195B3CE7A03213B6 /* HIDBridgeServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BACCEDE85449ABE070E8BC /* HIDBridgeServer.swift */; };
+		D18DF88480E01B7B9AD3DE4A /* KeyMoreCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D2C1573C7001BE0F87CA34DA /* TextProxyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD8417BFC65FFBC43F25958 /* TextProxyAction.swift */; };
+		D36986EA85BA2E7C2BCC330A /* DiagnosticsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B644F597494AF5F29147762 /* DiagnosticsViewController.swift */; };
+		EC20B5B75EAB518677FB7E47 /* KeyMoreCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1613BF19AC668CBB7298E907 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4750EA7A17AAAD990815693E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B7218B5B8F22B1EA1611D911;
+			remoteInfo = KeyMoreKeyboard;
+		};
+		488F800B8F94CA216AC8736B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4750EA7A17AAAD990815693E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD1195DB9774D8976F8F5487;
+			remoteInfo = KeyMoreCore;
+		};
+		69A31E34C07018F486EC687F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4750EA7A17AAAD990815693E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD1195DB9774D8976F8F5487;
+			remoteInfo = KeyMoreCore;
+		};
+		D04DC268CF3A8C74AF583688 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4750EA7A17AAAD990815693E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD1195DB9774D8976F8F5487;
+			remoteInfo = KeyMoreCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1EE5A9204CD8D17A865A5C6D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				D18DF88480E01B7B9AD3DE4A /* KeyMoreCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3261BDF67800F1EBD7879168 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1BF4EF4B5786B9678363BFBD /* KeyMoreKeyboard.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BFC261C32923279BE55C0ACF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				428438751A85E7B13688818C /* KeyMoreCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0630CD7F7770148DB2E2CE1D /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		0EDD2F5AEBCEA3FFFB9F17E9 /* PrivatePathProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivatePathProbe.swift; sourceTree = "<group>"; };
+		1554FAD01192A710D74BF25C /* KeyMoreCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KeyMoreCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		199922E4E0FA6C2FED8725C2 /* PrivatePathProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivatePathProbeTests.swift; sourceTree = "<group>"; };
+		1F3D0C2EDCE916D48D988705 /* Feasibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feasibility.swift; sourceTree = "<group>"; };
+		1FC315B6FDAC39C64AAE71E3 /* SpecialKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecialKey.swift; sourceTree = "<group>"; };
+		28185ACB64EEC499404AABED /* KeyMoreKeyboard.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = KeyMoreKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B644F597494AF5F29147762 /* DiagnosticsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsViewController.swift; sourceTree = "<group>"; };
+		3CDD408C51687906A8F9C9FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3D5CA568CEBB3952EF435F4B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3E4FD5FB5C0B92AF5EA44224 /* KeyMore.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KeyMore.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KeyMoreCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4DD8417BFC65FFBC43F25958 /* TextProxyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextProxyAction.swift; sourceTree = "<group>"; };
+		4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParityRouteMatrixTests.swift; sourceTree = "<group>"; };
+		6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridgeCodecTests.swift; sourceTree = "<group>"; };
+		86308354225935EAC723724B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridgeClient.swift; sourceTree = "<group>"; };
+		B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridge.swift; sourceTree = "<group>"; };
+		C24FB69D385F6876D74F5585 /* FeasibilityMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeasibilityMatrixTests.swift; sourceTree = "<group>"; };
+		C6BACCEDE85449ABE070E8BC /* HIDBridgeServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridgeServer.swift; sourceTree = "<group>"; };
+		C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDKeyboardReportTests.swift; sourceTree = "<group>"; };
+		CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDKeyboardReport.swift; sourceTree = "<group>"; };
+		DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardActionResolverTests.swift; sourceTree = "<group>"; };
+		EA2DFFF46A954D7AD80D8285 /* DiagnosticLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLog.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		220D2C14B1E5C0D1D3811A2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EC20B5B75EAB518677FB7E47 /* KeyMoreCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE3A8300F56BA724107825F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C7374D8492C439EDD74F5DA /* KeyMoreCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3BA58BED09E65B48F6CCF47 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ACC52D647C01E6B31702EBE4 /* KeyMoreCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0BC1076E54A2A3AAF959AA2A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3E4FD5FB5C0B92AF5EA44224 /* KeyMore.app */,
+				488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */,
+				1554FAD01192A710D74BF25C /* KeyMoreCoreTests.xctest */,
+				28185ACB64EEC499404AABED /* KeyMoreKeyboard.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2AE2B51234015DD0B5022E50 /* KeyMoreCore */ = {
+			isa = PBXGroup;
+			children = (
+				EA2DFFF46A954D7AD80D8285 /* DiagnosticLog.swift */,
+				1F3D0C2EDCE916D48D988705 /* Feasibility.swift */,
+				B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */,
+				CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */,
+				0EDD2F5AEBCEA3FFFB9F17E9 /* PrivatePathProbe.swift */,
+				1FC315B6FDAC39C64AAE71E3 /* SpecialKey.swift */,
+				4DD8417BFC65FFBC43F25958 /* TextProxyAction.swift */,
+			);
+			name = KeyMoreCore;
+			path = Sources/KeyMoreCore;
+			sourceTree = "<group>";
+		};
+		86227FE15C1D39DA2CF93213 = {
+			isa = PBXGroup;
+			children = (
+				A9F428835EC5F014EB076733 /* App */,
+				E8322B5C7D9E3B07AD1C22A1 /* KeyboardExtension */,
+				2AE2B51234015DD0B5022E50 /* KeyMoreCore */,
+				EDAB10052747650D8627593E /* KeyMoreCoreTests */,
+				0BC1076E54A2A3AAF959AA2A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A9F428835EC5F014EB076733 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				3D5CA568CEBB3952EF435F4B /* AppDelegate.swift */,
+				3B644F597494AF5F29147762 /* DiagnosticsViewController.swift */,
+				C6BACCEDE85449ABE070E8BC /* HIDBridgeServer.swift */,
+				86308354225935EAC723724B /* Info.plist */,
+				0630CD7F7770148DB2E2CE1D /* SceneDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E8322B5C7D9E3B07AD1C22A1 /* KeyboardExtension */ = {
+			isa = PBXGroup;
+			children = (
+				AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */,
+				3CDD408C51687906A8F9C9FC /* Info.plist */,
+				C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */,
+			);
+			path = KeyboardExtension;
+			sourceTree = "<group>";
+		};
+		EDAB10052747650D8627593E /* KeyMoreCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				C24FB69D385F6876D74F5585 /* FeasibilityMatrixTests.swift */,
+				6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */,
+				CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */,
+				DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */,
+				4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */,
+				199922E4E0FA6C2FED8725C2 /* PrivatePathProbeTests.swift */,
+			);
+			name = KeyMoreCoreTests;
+			path = Tests/KeyMoreCoreTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1F75F4EB5E4D0EE718BC2F4A /* KeyMore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1C3174ECEA4A64494DE8AA71 /* Build configuration list for PBXNativeTarget "KeyMore" */;
+			buildPhases = (
+				E262F7AA605B9C1429BD3578 /* Sources */,
+				D3BA58BED09E65B48F6CCF47 /* Frameworks */,
+				3261BDF67800F1EBD7879168 /* Embed Foundation Extensions */,
+				BFC261C32923279BE55C0ACF /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A67D08DDFED70A34DA6E3373 /* PBXTargetDependency */,
+				56F020FF41453F6B408FD33A /* PBXTargetDependency */,
+			);
+			name = KeyMore;
+			packageProductDependencies = (
+			);
+			productName = KeyMore;
+			productReference = 3E4FD5FB5C0B92AF5EA44224 /* KeyMore.app */;
+			productType = "com.apple.product-type.application";
+		};
+		6B5CA6602E38AFF21DDF33EC /* KeyMoreCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 350A4F6AD7EEB40EB93ECBBB /* Build configuration list for PBXNativeTarget "KeyMoreCoreTests" */;
+			buildPhases = (
+				EFF5E9216149BF4E4AA00A9C /* Sources */,
+				CE3A8300F56BA724107825F1 /* Frameworks */,
+				1EE5A9204CD8D17A865A5C6D /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1349157DBC670DDE790FBEF5 /* PBXTargetDependency */,
+			);
+			name = KeyMoreCoreTests;
+			packageProductDependencies = (
+			);
+			productName = KeyMoreCoreTests;
+			productReference = 1554FAD01192A710D74BF25C /* KeyMoreCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B7218B5B8F22B1EA1611D911 /* KeyMoreKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6AF1D1F216AD0D1360B9D8C1 /* Build configuration list for PBXNativeTarget "KeyMoreKeyboard" */;
+			buildPhases = (
+				12FF2003FADC3A61FDACA399 /* Sources */,
+				220D2C14B1E5C0D1D3811A2F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				42A876202AEE8A32A1B71BE2 /* PBXTargetDependency */,
+			);
+			name = KeyMoreKeyboard;
+			packageProductDependencies = (
+			);
+			productName = KeyMoreKeyboard;
+			productReference = 28185ACB64EEC499404AABED /* KeyMoreKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		DD1195DB9774D8976F8F5487 /* KeyMoreCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3332803A55C406380408FCD7 /* Build configuration list for PBXNativeTarget "KeyMoreCore" */;
+			buildPhases = (
+				6D08C45036659BF96A8692B8 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KeyMoreCore;
+			packageProductDependencies = (
+			);
+			productName = KeyMoreCore;
+			productReference = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4750EA7A17AAAD990815693E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					1F75F4EB5E4D0EE718BC2F4A = {
+						ProvisioningStyle = Automatic;
+					};
+					6B5CA6602E38AFF21DDF33EC = {
+						ProvisioningStyle = Automatic;
+					};
+					B7218B5B8F22B1EA1611D911 = {
+						ProvisioningStyle = Automatic;
+					};
+					DD1195DB9774D8976F8F5487 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 8BCB6B99644E894E686A5E56 /* Build configuration list for PBXProject "KeyMore" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 86227FE15C1D39DA2CF93213;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0BC1076E54A2A3AAF959AA2A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1F75F4EB5E4D0EE718BC2F4A /* KeyMore */,
+				DD1195DB9774D8976F8F5487 /* KeyMoreCore */,
+				6B5CA6602E38AFF21DDF33EC /* KeyMoreCoreTests */,
+				B7218B5B8F22B1EA1611D911 /* KeyMoreKeyboard */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		12FF2003FADC3A61FDACA399 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C5EF936F6FAFC8D70DC5C4A /* HIDBridgeClient.swift in Sources */,
+				61683D1D62E6588493F7D485 /* KeyboardViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6D08C45036659BF96A8692B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0996AB6EC6BBD07E545CA581 /* DiagnosticLog.swift in Sources */,
+				A77869C7FBDE744F7159690C /* Feasibility.swift in Sources */,
+				A02D9887103F2FA162A195E0 /* HIDBridge.swift in Sources */,
+				740700C7B42298202F36E15B /* HIDKeyboardReport.swift in Sources */,
+				053B5F646F593774C71F3671 /* PrivatePathProbe.swift in Sources */,
+				17D1AD26A3146A553C310714 /* SpecialKey.swift in Sources */,
+				D2C1573C7001BE0F87CA34DA /* TextProxyAction.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E262F7AA605B9C1429BD3578 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4826ADC60704F63E476D4A7D /* AppDelegate.swift in Sources */,
+				D36986EA85BA2E7C2BCC330A /* DiagnosticsViewController.swift in Sources */,
+				C9ABDBB2195B3CE7A03213B6 /* HIDBridgeServer.swift in Sources */,
+				75AB2C4B0C64FE6F8C9B7FB7 /* SceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EFF5E9216149BF4E4AA00A9C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6598AA0E76B3346C3D7785A5 /* FeasibilityMatrixTests.swift in Sources */,
+				C210CDBC801DE24651FDFDCE /* HIDBridgeCodecTests.swift in Sources */,
+				AB146ADAFC20178E45FC093B /* HIDKeyboardReportTests.swift in Sources */,
+				179F39A90CFED329233F7D2A /* KeyboardActionResolverTests.swift in Sources */,
+				B52CEE2A82BCD8925478F688 /* ParityRouteMatrixTests.swift in Sources */,
+				4587C7941ED6F5CEDFFCA07E /* PrivatePathProbeTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1349157DBC670DDE790FBEF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD1195DB9774D8976F8F5487 /* KeyMoreCore */;
+			targetProxy = 488F800B8F94CA216AC8736B /* PBXContainerItemProxy */;
+		};
+		42A876202AEE8A32A1B71BE2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD1195DB9774D8976F8F5487 /* KeyMoreCore */;
+			targetProxy = D04DC268CF3A8C74AF583688 /* PBXContainerItemProxy */;
+		};
+		56F020FF41453F6B408FD33A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B7218B5B8F22B1EA1611D911 /* KeyMoreKeyboard */;
+			targetProxy = 1613BF19AC668CBB7298E907 /* PBXContainerItemProxy */;
+		};
+		A67D08DDFED70A34DA6E3373 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD1195DB9774D8976F8F5487 /* KeyMoreCore */;
+			targetProxy = 69A31E34C07018F486EC687F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1F8B9026D105515D0211C132 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMoreCoreTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		4C26BB1B71B8807EEA5B2DED /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMoreCoreTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		591AFC198E629DB621F2004F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				INFOPLIST_FILE = KeyboardExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMore.Keyboard;
+				PRODUCT_NAME = KeyMoreKeyboard;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		649A90567533ACDA0206B1E3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		8205CA13B9244E2B55C2EBCE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMore;
+				PRODUCT_NAME = KeyMore;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AF608FC04F74D21BC6BEC5B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMoreCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		B16EB32D765624298F6316C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMoreCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		C535AA1E86D2918A7F21EB81 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				INFOPLIST_FILE = KeyboardExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMore.Keyboard;
+				PRODUCT_NAME = KeyMoreKeyboard;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D48CC8973D805A1E345D5D54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		E789131AC1D83C1FA4CDB335 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rudironsoni.KeyMore;
+				PRODUCT_NAME = KeyMore;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1C3174ECEA4A64494DE8AA71 /* Build configuration list for PBXNativeTarget "KeyMore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8205CA13B9244E2B55C2EBCE /* Debug */,
+				E789131AC1D83C1FA4CDB335 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3332803A55C406380408FCD7 /* Build configuration list for PBXNativeTarget "KeyMoreCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B16EB32D765624298F6316C5 /* Debug */,
+				AF608FC04F74D21BC6BEC5B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		350A4F6AD7EEB40EB93ECBBB /* Build configuration list for PBXNativeTarget "KeyMoreCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C26BB1B71B8807EEA5B2DED /* Debug */,
+				1F8B9026D105515D0211C132 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6AF1D1F216AD0D1360B9D8C1 /* Build configuration list for PBXNativeTarget "KeyMoreKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C535AA1E86D2918A7F21EB81 /* Debug */,
+				591AFC198E629DB621F2004F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8BCB6B99644E894E686A5E56 /* Build configuration list for PBXProject "KeyMore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				649A90567533ACDA0206B1E3 /* Debug */,
+				D48CC8973D805A1E345D5D54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4750EA7A17AAAD990815693E /* Project object */;
+}
