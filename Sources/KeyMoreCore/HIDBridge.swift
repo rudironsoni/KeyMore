@@ -34,6 +34,7 @@ public enum HIDBridgeSource: String, Codable, Equatable, Sendable {
 public enum HIDBridgeDispatchMode: String, Codable, Equatable, Sendable {
     case diagnosticAppSink
     case appIntegratedSink
+    case coreHIDVirtualDevice
     case externalHardwareBridge
     case privateSystemDispatcher
 }
@@ -62,9 +63,9 @@ public struct HIDBridgeMessage: Codable, Equatable, Identifiable, Sendable {
         self.fallbackAction = fallbackAction
     }
 
-    public static func stroke(
+    public static func keyPress(
         keyLabel: String,
-        stroke: HIDKeyStroke,
+        keyPress: HIDKeyPress,
         fallbackAction: String? = nil,
         source: HIDBridgeSource = .keyboardExtension
     ) -> HIDBridgeMessage {
@@ -72,8 +73,8 @@ public struct HIDBridgeMessage: Codable, Equatable, Identifiable, Sendable {
             source: source,
             keyLabel: keyLabel,
             frames: [
-                HIDBridgeFrame(phase: .keyDown, report: stroke.down),
-                HIDBridgeFrame(phase: .keyUp, report: stroke.up)
+                HIDBridgeFrame(phase: .keyDown, report: keyPress.down),
+                HIDBridgeFrame(phase: .keyUp, report: keyPress.up)
             ],
             fallbackAction: fallbackAction
         )

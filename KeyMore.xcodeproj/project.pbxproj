@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		048BFB49F07AE3B2D007CD19 /* KeyboardInputMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4209F0CDD5026C77D8D732D /* KeyboardInputMethod.swift */; };
 		053B5F646F593774C71F3671 /* PrivatePathProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDD2F5AEBCEA3FFFB9F17E9 /* PrivatePathProbe.swift */; };
+		05CCA35711D8D36750E6B79A /* KeyboardInputMethodTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9DDCFD4CF7EFEC2D007A9F /* KeyboardInputMethodTests.swift */; };
 		0996AB6EC6BBD07E545CA581 /* DiagnosticLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2DFFF46A954D7AD80D8285 /* DiagnosticLog.swift */; };
 		0C5EF936F6FAFC8D70DC5C4A /* HIDBridgeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */; };
 		179F39A90CFED329233F7D2A /* KeyboardActionResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */; };
@@ -18,6 +20,7 @@
 		4587C7941ED6F5CEDFFCA07E /* PrivatePathProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 199922E4E0FA6C2FED8725C2 /* PrivatePathProbeTests.swift */; };
 		4826ADC60704F63E476D4A7D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5CA568CEBB3952EF435F4B /* AppDelegate.swift */; };
 		61683D1D62E6588493F7D485 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */; };
+		6443CF0E43A45A67E5414F66 /* VirtualHIDKeyboardDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F81C8AAC731C94A416011A9 /* VirtualHIDKeyboardDispatcher.swift */; };
 		6598AA0E76B3346C3D7785A5 /* FeasibilityMatrixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24FB69D385F6876D74F5585 /* FeasibilityMatrixTests.swift */; };
 		740700C7B42298202F36E15B /* HIDKeyboardReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */; };
 		75AB2C4B0C64FE6F8C9B7FB7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0630CD7F7770148DB2E2CE1D /* SceneDelegate.swift */; };
@@ -26,6 +29,7 @@
 		AB146ADAFC20178E45FC093B /* HIDKeyboardReportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */; };
 		ACC52D647C01E6B31702EBE4 /* KeyMoreCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; };
 		B52CEE2A82BCD8925478F688 /* ParityRouteMatrixTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */; };
+		BC7F7761BD94F559D19CBFA9 /* VirtualHIDKeyboardDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDBD65234D444A532F65A91E /* VirtualHIDKeyboardDispatcherTests.swift */; };
 		C210CDBC801DE24651FDFDCE /* HIDBridgeCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */; };
 		C9ABDBB2195B3CE7A03213B6 /* HIDBridgeServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BACCEDE85449ABE070E8BC /* HIDBridgeServer.swift */; };
 		D18DF88480E01B7B9AD3DE4A /* KeyMoreCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -116,8 +120,11 @@
 		488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = KeyMoreCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DD8417BFC65FFBC43F25958 /* TextProxyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextProxyAction.swift; sourceTree = "<group>"; };
 		4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParityRouteMatrixTests.swift; sourceTree = "<group>"; };
+		5F81C8AAC731C94A416011A9 /* VirtualHIDKeyboardDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualHIDKeyboardDispatcher.swift; sourceTree = "<group>"; };
 		6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridgeCodecTests.swift; sourceTree = "<group>"; };
+		714E9A82BBB1B25453A27C94 /* KeyMoreKeyboard.VirtualHID.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KeyMoreKeyboard.VirtualHID.entitlements; sourceTree = "<group>"; };
 		86308354225935EAC723724B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A4209F0CDD5026C77D8D732D /* KeyboardInputMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInputMethod.swift; sourceTree = "<group>"; };
 		AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridgeClient.swift; sourceTree = "<group>"; };
 		B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDBridge.swift; sourceTree = "<group>"; };
 		C24FB69D385F6876D74F5585 /* FeasibilityMatrixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeasibilityMatrixTests.swift; sourceTree = "<group>"; };
@@ -125,8 +132,10 @@
 		C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
 		CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDKeyboardReportTests.swift; sourceTree = "<group>"; };
 		CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDKeyboardReport.swift; sourceTree = "<group>"; };
+		DDBD65234D444A532F65A91E /* VirtualHIDKeyboardDispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualHIDKeyboardDispatcherTests.swift; sourceTree = "<group>"; };
 		DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardActionResolverTests.swift; sourceTree = "<group>"; };
 		EA2DFFF46A954D7AD80D8285 /* DiagnosticLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLog.swift; sourceTree = "<group>"; };
+		FE9DDCFD4CF7EFEC2D007A9F /* KeyboardInputMethodTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInputMethodTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -175,9 +184,11 @@
 				1F3D0C2EDCE916D48D988705 /* Feasibility.swift */,
 				B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */,
 				CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */,
+				A4209F0CDD5026C77D8D732D /* KeyboardInputMethod.swift */,
 				0EDD2F5AEBCEA3FFFB9F17E9 /* PrivatePathProbe.swift */,
 				1FC315B6FDAC39C64AAE71E3 /* SpecialKey.swift */,
 				4DD8417BFC65FFBC43F25958 /* TextProxyAction.swift */,
+				5F81C8AAC731C94A416011A9 /* VirtualHIDKeyboardDispatcher.swift */,
 			);
 			name = KeyMoreCore;
 			path = Sources/KeyMoreCore;
@@ -212,6 +223,7 @@
 				AB02A7010D00FC2C54022E69 /* HIDBridgeClient.swift */,
 				3CDD408C51687906A8F9C9FC /* Info.plist */,
 				C6D1A577AE66748D346C0A32 /* KeyboardViewController.swift */,
+				714E9A82BBB1B25453A27C94 /* KeyMoreKeyboard.VirtualHID.entitlements */,
 			);
 			path = KeyboardExtension;
 			sourceTree = "<group>";
@@ -223,8 +235,10 @@
 				6047943B88DC3942A225C060 /* HIDBridgeCodecTests.swift */,
 				CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */,
 				DF718C1A7F4F7CA5075A1C03 /* KeyboardActionResolverTests.swift */,
+				FE9DDCFD4CF7EFEC2D007A9F /* KeyboardInputMethodTests.swift */,
 				4F94E25BA162CA17A4CBD16E /* ParityRouteMatrixTests.swift */,
 				199922E4E0FA6C2FED8725C2 /* PrivatePathProbeTests.swift */,
+				DDBD65234D444A532F65A91E /* VirtualHIDKeyboardDispatcherTests.swift */,
 			);
 			name = KeyMoreCoreTests;
 			path = Tests/KeyMoreCoreTests;
@@ -374,9 +388,11 @@
 				A77869C7FBDE744F7159690C /* Feasibility.swift in Sources */,
 				A02D9887103F2FA162A195E0 /* HIDBridge.swift in Sources */,
 				740700C7B42298202F36E15B /* HIDKeyboardReport.swift in Sources */,
+				048BFB49F07AE3B2D007CD19 /* KeyboardInputMethod.swift in Sources */,
 				053B5F646F593774C71F3671 /* PrivatePathProbe.swift in Sources */,
 				17D1AD26A3146A553C310714 /* SpecialKey.swift in Sources */,
 				D2C1573C7001BE0F87CA34DA /* TextProxyAction.swift in Sources */,
+				6443CF0E43A45A67E5414F66 /* VirtualHIDKeyboardDispatcher.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,8 +415,10 @@
 				C210CDBC801DE24651FDFDCE /* HIDBridgeCodecTests.swift in Sources */,
 				AB146ADAFC20178E45FC093B /* HIDKeyboardReportTests.swift in Sources */,
 				179F39A90CFED329233F7D2A /* KeyboardActionResolverTests.swift in Sources */,
+				05CCA35711D8D36750E6B79A /* KeyboardInputMethodTests.swift in Sources */,
 				B52CEE2A82BCD8925478F688 /* ParityRouteMatrixTests.swift in Sources */,
 				4587C7941ED6F5CEDFFCA07E /* PrivatePathProbeTests.swift in Sources */,
+				BC7F7761BD94F559D19CBFA9 /* VirtualHIDKeyboardDispatcherTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,6 +484,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = KeyboardExtension/KeyMoreKeyboard.VirtualHID.entitlements;
 				INFOPLIST_FILE = KeyboardExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -612,6 +631,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = KeyboardExtension/KeyMoreKeyboard.VirtualHID.entitlements;
 				INFOPLIST_FILE = KeyboardExtension/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

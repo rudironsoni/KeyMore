@@ -70,6 +70,7 @@ public enum KeyFeasibilityMatrix {
 
 public enum ParityRoute: String, CaseIterable, Identifiable {
     case keyboardExtensionTextProxy
+    case coreHIDVirtualDevice
     case privateXCTestSynthesis
     case privateIOKitHIDInjection
     case graphicsServicesGSEvent
@@ -82,6 +83,8 @@ public enum ParityRoute: String, CaseIterable, Identifiable {
         switch self {
         case .keyboardExtensionTextProxy:
             return "Keyboard extension text proxy"
+        case .coreHIDVirtualDevice:
+            return "CoreHID virtual device"
         case .privateXCTestSynthesis:
             return "XCTest private event synthesis"
         case .privateIOKitHIDInjection:
@@ -101,6 +104,7 @@ public struct ParityRouteAssessment: Equatable, Identifiable {
     public let route: ParityRoute
     public let canTargetArbitraryApps: Bool
     public let requiresPrivateAPI: Bool
+    public let requiresRestrictedEntitlement: Bool
     public let requiresExternalHardware: Bool
     public let expectedOutcome: KeyEmissionOutcome
     public let evidence: String
@@ -109,6 +113,7 @@ public struct ParityRouteAssessment: Equatable, Identifiable {
         route: ParityRoute,
         canTargetArbitraryApps: Bool,
         requiresPrivateAPI: Bool,
+        requiresRestrictedEntitlement: Bool = false,
         requiresExternalHardware: Bool,
         expectedOutcome: KeyEmissionOutcome,
         evidence: String
@@ -116,6 +121,7 @@ public struct ParityRouteAssessment: Equatable, Identifiable {
         self.route = route
         self.canTargetArbitraryApps = canTargetArbitraryApps
         self.requiresPrivateAPI = requiresPrivateAPI
+        self.requiresRestrictedEntitlement = requiresRestrictedEntitlement
         self.requiresExternalHardware = requiresExternalHardware
         self.expectedOutcome = expectedOutcome
         self.evidence = evidence
@@ -131,6 +137,15 @@ public enum ParityRouteMatrix {
             requiresExternalHardware: false,
             expectedOutcome: .textProxyOnly,
             evidence: "Apple custom keyboard extensions provide text-document proxy operations, not hardware key dispatch."
+        ),
+        ParityRouteAssessment(
+            route: .coreHIDVirtualDevice,
+            canTargetArbitraryApps: true,
+            requiresPrivateAPI: false,
+            requiresRestrictedEntitlement: true,
+            requiresExternalHardware: false,
+            expectedOutcome: .blockedByEntitlement,
+            evidence: "CoreHID can model a virtual keyboard and dispatch reports, but creating a virtual HID device requires Apple's com.apple.developer.hid.virtual.device entitlement."
         ),
         ParityRouteAssessment(
             route: .privateXCTestSynthesis,

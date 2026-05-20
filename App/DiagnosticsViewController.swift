@@ -172,21 +172,22 @@ final class DiagnosticsViewController: UIViewController, UITextViewDelegate {
             label.font = .preferredFont(forTextStyle: .footnote)
             label.numberOfLines = 0
             let arbitrary = route.canTargetArbitraryApps ? "arbitrary apps" : "not arbitrary"
-            label.text = "\(route.route.title): \(route.expectedOutcome.rawValue) - \(arbitrary)"
+            let entitlement = route.requiresRestrictedEntitlement ? ", restricted entitlement" : ""
+            label.text = "\(route.route.title): \(route.expectedOutcome.rawValue) - \(arbitrary)\(entitlement)"
             matrixStack.addArrangedSubview(label)
         }
 
         addSectionTitle("HID reports")
-        let examples: [(String, HIDKeyStroke?)] = [
-            ("Cmd-C", HIDReportBuilder.stroke(for: "c", activeModifiers: [.command])),
-            ("Ctrl-Opt-Tab", HIDReportBuilder.stroke(for: .tab, activeModifiers: [.control, .option])),
-            ("Esc", HIDReportBuilder.stroke(for: .escape))
+        let examples: [(String, HIDKeyPress?)] = [
+            ("Cmd-C", HIDReportBuilder.keyPress(for: "c", activeModifiers: [.command])),
+            ("Ctrl-Opt-Tab", HIDReportBuilder.keyPress(for: .tab, activeModifiers: [.control, .option])),
+            ("Esc", HIDReportBuilder.keyPress(for: .escape))
         ]
-        for (title, stroke) in examples {
+        for (title, keyPress) in examples {
             let label = UILabel()
             label.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
             label.numberOfLines = 0
-            label.text = "\(title): \(stroke?.down.bytes.hexBytes ?? "unavailable")"
+            label.text = "\(title): \(keyPress?.down.bytes.hexBytes ?? "unavailable")"
             matrixStack.addArrangedSubview(label)
         }
     }

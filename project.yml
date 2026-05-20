@@ -48,6 +48,7 @@ targets:
         INFOPLIST_FILE: KeyboardExtension/Info.plist
         PRODUCT_NAME: KeyMoreKeyboard
         APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_ENTITLEMENTS: KeyboardExtension/KeyMoreKeyboard.VirtualHID.entitlements
 
   KeyMoreCoreTests:
     type: bundle.unit-test

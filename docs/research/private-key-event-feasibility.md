@@ -23,6 +23,7 @@ Public custom keyboard extensions can draw keys and use `UITextDocumentProxy` to
 - Private symbol inspection: checks whether relevant private frameworks and symbols are present in the process, without claiming event injection works.
 - Private Objective-C runtime inspection: checks whether XCTest, UIKit, and other private classes/selectors are present in the running process.
 - HID report generation: verifies that KeyMore can produce the same modifier/usage byte reports an external keyboard would send, even before a delivery path exists.
+- CoreHID virtual device dispatch: attempts to create a virtual keyboard and dispatch KeyMore HID reports through Apple's entitlement-gated `HIDVirtualDevice` path.
 - Cross-app checks: records whether behavior survives outside the diagnostics host.
 
 ## Evidence Labels
@@ -66,6 +67,16 @@ Sources:
 - https://raw.githubusercontent.com/appium/WebDriverAgent/master/PrivateHeaders/XCTest/XCPointerEventPath.h
 - https://raw.githubusercontent.com/appium/WebDriverAgent/master/PrivateHeaders/XCTest/XCSynthesizedEventRecord.h
 
+### CoreHID virtual device entitlement
+
+Apple's CoreHID documentation describes `HIDVirtualDevice`, including virtual keyboard reports dispatched through `dispatchInputReport(data:timestamp:)`. This is the strongest software route because it is public API and models a real HID device. The blocker is entitlement access: virtual HID creation requires Apple's restricted `com.apple.developer.hid.virtual.device` entitlement, and approval is not assumed. KeyMore now implements this route experimentally and treats creation failure as `blocked-by-entitlement`.
+
+Sources:
+- https://developer.apple.com/documentation/corehid
+- https://developer.apple.com/documentation/corehid/hidvirtualdevice
+- https://developer.apple.com/documentation/corehid/creatingvirtualdevices
+- https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.hid.virtual.device
+
 ### IOKit and host-app private hooks
 
 Reverse-engineering discussion points to `IOHIDEventCreateKeyboardEvent` and, for non-jailbroken app-integrated tests, feeding a constructed event into a private host-app handler such as `_handleHIDEvent:`. This is not arbitrary-app keyboard-extension parity; it is either app-integrated, entitlement blocked, or jailbreak/daemon shaped.
@@ -77,7 +88,7 @@ Sources:
 
 ### External HID bridge
 
-Projects such as InputStick and BLE HID keyboard firmware show the cleanest route to real parity: an external device presents as USB/Bluetooth HID, and the host OS treats it as an actual keyboard. For KeyMore, that means a companion hardware bridge is the only currently plausible non-private route to arbitrary-app external-keyboard behavior.
+Projects such as InputStick and BLE HID keyboard firmware show the cleanest non-entitlement route to real parity: an external device presents as USB/Bluetooth HID, and the host OS treats it as an actual keyboard. For KeyMore, that means a companion hardware bridge remains the fallback if Apple does not grant virtual HID entitlement access.
 
 Sources:
 - https://github.com/inputstick/InputStickAPI-iOS
@@ -89,4 +100,6 @@ Sources:
 - Apple App Extension Custom Keyboard guide: https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/CustomKeyboard.html
 - Apple App Review Guidelines, public API rule: https://developer.apple.com/app-store/review/guidelines/
 - Apple responder physical-key APIs: https://developer.apple.com/documentation/uikit/uiresponder/pressesbegan(_:with:)
+- Apple CoreHID virtual HID: https://developer.apple.com/documentation/corehid/hidvirtualdevice
+- Apple virtual HID entitlement: https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.hid.virtual.device
 - Private/prior-art leads: GraphicsServices/GSEvent, BackBoardServices/BKSHID, WebDriverAgent/Appium XCTest synthesis, IOKit HID keyboard events, BLE/USB HID bridge examples.

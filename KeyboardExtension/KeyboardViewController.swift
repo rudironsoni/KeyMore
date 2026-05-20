@@ -8,8 +8,7 @@ final class KeyboardViewController: UIInputViewController {
     private let logger = Logger(subsystem: "com.rudironsoni.KeyMore.Keyboard", category: "Keyboard")
     private let stackView = UIStackView()
     private var heightConstraint: NSLayoutConstraint?
-    private var activeModifiers = Set<SpecialKey>()
-    private var isShifted = false
+    private var inputContext = KeyboardInputContext()
     private var modifierButtons: [SpecialKey: UIButton] = [:]
     private var characterButtons: [UIButton: String] = [:]
 
@@ -84,7 +83,7 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         let delete = makeButton(title: "delete", symbolName: "delete.left", weight: 1.35)
-        delete.addAction(UIAction { [weak self] _ in self?.textDocumentProxy.deleteBackward() }, for: .touchUpInside)
+        delete.addAction(UIAction { [weak self] _ in self?.handleInput(.delete) }, for: .touchUpInside)
         row.addArrangedSubview(delete)
         return row
     }
@@ -97,50 +96,52 @@ final class KeyboardViewController: UIInputViewController {
         row.addArrangedSubview(globe)
 
         let space = makeButton(title: "space", weight: 2.4)
-        space.addAction(UIAction { [weak self] _ in self?.textDocumentProxy.insertText(" ") }, for: .touchUpInside)
+        space.addAction(UIAction { [weak self] _ in self?.handleInput(.space) }, for: .touchUpInside)
         row.addArrangedSubview(space)
 
         let enter = makeButton(title: "return", symbolName: "return", weight: 1.35)
-        enter.addAction(UIAction { [weak self] _ in self?.textDocumentProxy.insertText("\n") }, for: .touchUpInside)
+        enter.addAction(UIAction { [weak self] _ in self?.handleInput(.return) }, for: .touchUpInside)
         row.addArrangedSubview(enter)
 
         return row
     }
 
     private func handleSpecialKey(_ key: SpecialKey) {
-        logger.info("special key tap key=\(key.displayTitle, privacy: .public) fullAccess=\(self.hasFullAccess, privacy: .public)")
-        if [.control, .option, .command].contains(key) {
-            if activeModifiers.contains(key) {
-                activeModifiers.remove(key)
-                sendModifierState(
-                    keyLabel: key.displayTitle,
-                    report: HIDKeyboardReport(modifiers: HIDReportBuilder.modifiers(for: activeModifiers))
-                )
-            } else {
-                activeModifiers.insert(key)
-                sendModifierState(
-                    keyLabel: key.displayTitle,
-                    report: HIDKeyboardReport(modifiers: HIDReportBuilder.modifiers(for: activeModifiers))
-                )
-            }
-            updateModifierButtons()
-            return
-        }
-
-        sendStroke(keyLabel: key.displayTitle, stroke: HIDReportBuilder.stroke(for: key, activeModifiers: activeModifiers))
-        apply(KeyboardActionResolver.resolveSpecialKey(key))
-        clearOneShotModifiersIfNeeded()
+        logger.info("special key press key=\(key.displayTitle, privacy: .public) fullAccess=\(self.hasFullAccess, privacy: .public)")
+        handleInput(.special(key))
     }
 
     private func handleCharacter(_ rawCharacter: String) {
         let character = displayCharacter(rawCharacter)
-        logger.info("character key tap key=\(character, privacy: .public) fullAccess=\(self.hasFullAccess, privacy: .public)")
-        let stroke = characterStroke(for: rawCharacter)
-        sendStroke(keyLabel: character, stroke: stroke)
-        apply(KeyboardActionResolver.resolveCharacter(character, activeModifiers: activeModifiers))
+        logger.info("character key press key=\(character, privacy: .public) fullAccess=\(self.hasFullAccess, privacy: .public)")
+        handleInput(.character(rawCharacter))
+    }
 
-        if !activeModifiers.isEmpty {
-            clearOneShotModifiersIfNeeded()
+    private func handleInput(_ input: KeyboardInput) {
+        let result = KeyboardInputMethod.resolve(input, context: inputContext)
+        inputContext = result.nextContext
+
+        for outputEvent in result.outputEvents {
+            apply(outputEvent)
+        }
+
+        if result.shouldRebuildCharacterLabels {
+            rebuildCharacterLabels()
+        }
+
+        if result.shouldUpdateModifierButtons {
+            updateModifierButtons()
+        }
+    }
+
+    private func apply(_ outputEvent: KeyboardOutputEvent) {
+        switch outputEvent {
+        case .keyPress(let keyLabel, let keyPress, let fallback):
+            emitKeyPress(keyLabel: keyLabel, keyPress: keyPress, fallback: fallback)
+        case .modifierState(let keyLabel, let report):
+            sendModifierState(keyLabel: keyLabel, report: report)
+        case .textInput(let resolution):
+            apply(resolution)
         }
     }
 
@@ -156,8 +157,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func toggleShift() {
-        isShifted.toggle()
-        rebuildCharacterLabels()
+        handleInput(.shift)
     }
 
     private func rebuildCharacterLabels() {
@@ -168,14 +168,14 @@ final class KeyboardViewController: UIInputViewController {
 
     private func updateModifierButtons() {
         for (key, button) in modifierButtons {
-            button.isSelected = activeModifiers.contains(key)
+            button.isSelected = inputContext.activeModifiers.contains(key)
             button.backgroundColor = button.isSelected ? .systemBlue : .secondarySystemBackground
             button.setTitleColor(button.isSelected ? .white : .label, for: .normal)
         }
     }
 
     private func displayCharacter(_ character: String) -> String {
-        isShifted ? character.uppercased() : character.lowercased()
+        inputContext.isShifted ? character.uppercased() : character.lowercased()
     }
 
     private func makeRow() -> UIStackView {
@@ -210,45 +210,40 @@ final class KeyboardViewController: UIInputViewController {
         return button
     }
 
-    private func sendStroke(keyLabel: String, stroke: HIDKeyStroke?) {
-        guard let stroke else {
+    private func emitKeyPress(keyLabel: String, keyPress: HIDKeyPress?, fallback: KeyResolution) {
+        guard let keyPress else {
+            apply(fallback)
             return
         }
-        HIDBridgeClient.shared.send(HIDBridgeMessage.stroke(keyLabel: keyLabel, stroke: stroke))
-    }
 
-    private func characterStroke(for rawCharacter: String) -> HIDKeyStroke? {
-        guard let stroke = HIDReportBuilder.stroke(
-            for: Character(rawCharacter.lowercased()),
-            activeModifiers: activeModifiers
-        ) else {
-            return nil
-        }
-
-        guard isShifted else {
-            return stroke
-        }
-
-        var modifiers = stroke.down.modifiers
-        modifiers.insert(.leftShift)
-        return HIDKeyStroke(
-            down: HIDKeyboardReport(modifiers: modifiers, usages: stroke.down.usages),
-            up: stroke.up
+        let message = HIDBridgeMessage.keyPress(
+            keyLabel: keyLabel,
+            keyPress: keyPress,
+            fallbackAction: fallback.action.diagnosticDescription
         )
+        sendBridgeMessage(message)
+        VirtualHIDKeyboardDispatcher.shared.dispatch(message) { [weak self] result in
+            self?.logger.info("virtual HID key=\(keyLabel, privacy: .public) outcome=\(result.outcome.rawValue, privacy: .public) detail=\(result.detail, privacy: .public)")
+            guard result.shouldApplyTextProxyFallback else {
+                return
+            }
+
+            DispatchQueue.main.async { [weak self] in
+                self?.apply(fallback)
+            }
+        }
     }
 
     private func sendModifierState(keyLabel: String, report: HIDKeyboardReport) {
-        HIDBridgeClient.shared.send(HIDBridgeMessage.modifierState(keyLabel: keyLabel, report: report))
+        let message = HIDBridgeMessage.modifierState(keyLabel: keyLabel, report: report)
+        sendBridgeMessage(message)
+        VirtualHIDKeyboardDispatcher.shared.dispatch(message) { [weak self] result in
+            self?.logger.info("virtual HID modifier=\(keyLabel, privacy: .public) outcome=\(result.outcome.rawValue, privacy: .public) detail=\(result.detail, privacy: .public)")
+        }
     }
 
-    private func clearOneShotModifiersIfNeeded() {
-        guard !activeModifiers.isEmpty else {
-            return
-        }
-
-        activeModifiers.removeAll()
-        sendModifierState(keyLabel: "modifiers", report: .empty)
-        updateModifierButtons()
+    private func sendBridgeMessage(_ message: HIDBridgeMessage) {
+        HIDBridgeClient.shared.send(message)
     }
 }
 

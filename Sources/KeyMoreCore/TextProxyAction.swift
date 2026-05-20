@@ -1,12 +1,23 @@
 import Foundation
 
-public enum TextProxyAction: Equatable {
+public enum TextProxyAction: Equatable, Sendable {
     case insertText(String)
     case deleteBackward
     case noOperation(String)
+
+    public var diagnosticDescription: String {
+        switch self {
+        case .insertText(let text):
+            return "insertText(\(text.debugDescription))"
+        case .deleteBackward:
+            return "deleteBackward"
+        case .noOperation(let reason):
+            return reason
+        }
+    }
 }
 
-public struct KeyResolution: Equatable {
+public struct KeyResolution: Equatable, Sendable {
     public let action: TextProxyAction
     public let outcome: KeyEmissionOutcome
 
@@ -63,4 +74,3 @@ public enum KeyboardActionResolver {
         return Unicode.Scalar(value - 64)
     }
 }
-

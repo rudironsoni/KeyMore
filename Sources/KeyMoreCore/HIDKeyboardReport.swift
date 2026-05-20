@@ -17,7 +17,7 @@ public struct HIDModifier: OptionSet, Equatable, Sendable {
     public static let rightCommand = HIDModifier(rawValue: 0x80)
 }
 
-public enum HIDKeyboardUsage: UInt8, CaseIterable, Equatable {
+public enum HIDKeyboardUsage: UInt8, CaseIterable, Equatable, Sendable {
     case a = 0x04
     case b = 0x05
     case c = 0x06
@@ -95,7 +95,44 @@ public struct HIDKeyboardReport: Equatable, Sendable {
     public static let empty = HIDKeyboardReport()
 }
 
-public struct HIDKeyStroke: Equatable {
+public enum HIDKeyboardReportDescriptor {
+    public static let bootKeyboard: [UInt8] = [
+        0x05, 0x01,       // Generic Desktop
+        0x09, 0x06,       // Keyboard
+        0xA1, 0x01,       // Application collection
+        0x05, 0x07,       // Keyboard/Keypad usages
+        0x19, 0xE0,       // Left Control
+        0x29, 0xE7,       // Right Command
+        0x15, 0x00,
+        0x25, 0x01,
+        0x75, 0x01,
+        0x95, 0x08,
+        0x81, 0x02,       // Modifier byte
+        0x95, 0x01,
+        0x75, 0x08,
+        0x81, 0x01,       // Reserved byte
+        0x95, 0x05,
+        0x75, 0x01,
+        0x05, 0x08,
+        0x19, 0x01,
+        0x29, 0x05,
+        0x91, 0x02,       // LED output report
+        0x95, 0x01,
+        0x75, 0x03,
+        0x91, 0x01,       // LED padding
+        0x95, 0x06,
+        0x75, 0x08,
+        0x15, 0x00,
+        0x25, 0x65,
+        0x05, 0x07,
+        0x19, 0x00,
+        0x29, 0x65,
+        0x81, 0x00,       // Six key usage bytes
+        0xC0
+    ]
+}
+
+public struct HIDKeyPress: Equatable, Sendable {
     public let down: HIDKeyboardReport
     public let up: HIDKeyboardReport
 
@@ -125,26 +162,26 @@ public enum HIDReportBuilder {
         return modifiers
     }
 
-    public static func stroke(for specialKey: SpecialKey, activeModifiers: Set<SpecialKey> = []) -> HIDKeyStroke? {
+    public static func keyPress(for specialKey: SpecialKey, activeModifiers: Set<SpecialKey> = []) -> HIDKeyPress? {
         let modifiers = modifiers(for: activeModifiers)
         switch specialKey {
         case .escape:
-            return HIDKeyStroke(usage: .escape, modifiers: modifiers)
+            return HIDKeyPress(usage: .escape, modifiers: modifiers)
         case .tab:
-            return HIDKeyStroke(usage: .tab, modifiers: modifiers)
+            return HIDKeyPress(usage: .tab, modifiers: modifiers)
         case .control:
-            return HIDKeyStroke(down: HIDKeyboardReport(modifiers: .leftControl))
+            return HIDKeyPress(down: HIDKeyboardReport(modifiers: .leftControl))
         case .option:
-            return HIDKeyStroke(down: HIDKeyboardReport(modifiers: .leftOption))
+            return HIDKeyPress(down: HIDKeyboardReport(modifiers: .leftOption))
         case .command:
-            return HIDKeyStroke(down: HIDKeyboardReport(modifiers: .leftCommand))
+            return HIDKeyPress(down: HIDKeyboardReport(modifiers: .leftCommand))
         }
     }
 
-    public static func stroke(for character: Character, activeModifiers: Set<SpecialKey>) -> HIDKeyStroke? {
+    public static func keyPress(for character: Character, activeModifiers: Set<SpecialKey>) -> HIDKeyPress? {
         guard let usage = HIDKeyboardUsage.letter(character) else {
             return nil
         }
-        return HIDKeyStroke(usage: usage, modifiers: modifiers(for: activeModifiers))
+        return HIDKeyPress(usage: usage, modifiers: modifiers(for: activeModifiers))
     }
 }

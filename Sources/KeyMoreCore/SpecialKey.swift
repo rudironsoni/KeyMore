@@ -1,6 +1,6 @@
 import Foundation
 
-public enum SpecialKey: String, CaseIterable, Identifiable {
+public enum SpecialKey: String, CaseIterable, Identifiable, Sendable {
     case escape
     case control
     case option
@@ -24,4 +24,3 @@ public enum SpecialKey: String, CaseIterable, Identifiable {
         }
     }
 }
-
