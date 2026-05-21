@@ -9,6 +9,10 @@ settings:
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.1"
     CURRENT_PROJECT_VERSION: "1"
+packages:
+  KeyboardExtensionKit:
+    url: https://github.com/Kyome22/KeyboardExtensionKit.git
+    exactVersion: 0.0.3
 targets:
   KeyMoreCore:
     type: framework
@@ -42,6 +46,8 @@ targets:
       - path: KeyboardExtension
     dependencies:
       - target: KeyMoreCore
+      - package: KeyboardExtensionKit
+        product: KeyboardExtensionKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rudironsoni.KeyMore.Keyboard

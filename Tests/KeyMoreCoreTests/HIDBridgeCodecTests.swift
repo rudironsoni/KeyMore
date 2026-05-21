@@ -23,7 +23,7 @@ final class HIDBridgeCodecTests: XCTestCase {
         XCTAssertEqual(decoded, message)
         XCTAssertEqual(decoded.frames.map(\.bytes), [
             [0x08, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00],
-            HIDKeyboardReport.empty.bytes
+            [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         ])
     }
 
@@ -54,7 +54,7 @@ final class HIDBridgeCodecTests: XCTestCase {
         XCTAssertEqual(message.frames.map(\.phase), [.keyDown, .keyUp])
         XCTAssertEqual(message.frames.map(\.bytes), [
             [0x0D, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00],
-            HIDKeyboardReport.empty.bytes
+            [0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         ])
         XCTAssertEqual(message.fallbackAction, "hardware route required")
     }
@@ -73,9 +73,36 @@ final class HIDBridgeCodecTests: XCTestCase {
         XCTAssertEqual(decoded.frames.map(\.phase), [.keyDown, .keyUp])
         XCTAssertEqual(decoded.frames.map(\.bytes), [
             [0x05, 0x00, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00],
-            HIDKeyboardReport.empty.bytes
+            [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         ])
         XCTAssertEqual(decoded.fallbackAction, "insertText(\"\\t\")")
+    }
+
+    func testKeyPressMessagesPreserveKeyDownKeyUpShapeForEveryVisibleHardwareKey() throws {
+        for keyCase in visibleHardwareKeyCases {
+            for modifierCase in allModifierCases {
+                let keyPress = HIDKeyPress(usage: keyCase.usage, modifiers: HIDModifier(rawValue: modifierCase.byte))
+                let message = HIDBridgeMessage.keyPress(
+                    keyLabel: keyCase.label,
+                    keyPress: keyPress,
+                    fallbackAction: keyCase.fallback
+                )
+
+                let decoded = try HIDBridgeCodec.decodeMessage(try HIDBridgeCodec.encode(message))
+
+                XCTAssertEqual(decoded.keyLabel, keyCase.label)
+                XCTAssertEqual(decoded.frames.map(\.phase), [.keyDown, .keyUp])
+                XCTAssertEqual(
+                    decoded.frames.map(\.bytes),
+                    [
+                        reportBytes(modifiers: modifierCase.byte, usage: keyCase.usage.rawValue),
+                        reportBytes(modifiers: modifierCase.byte)
+                    ],
+                    "Unexpected bridge frames for \(modifierCase.name)+\(keyCase.label)"
+                )
+                XCTAssertEqual(decoded.fallbackAction, keyCase.fallback)
+            }
+        }
     }
 
     func testModifierStateMessagesCoverEveryStickyModifierCombination() throws {
@@ -114,5 +141,36 @@ final class HIDBridgeCodecTests: XCTestCase {
         let decoded = try HIDBridgeCodec.decodeAck(try HIDBridgeCodec.encode(ack))
 
         XCTAssertEqual(decoded, ack)
+    }
+
+    private var allModifierCases: [(keys: Set<SpecialKey>, byte: UInt8, name: String)] {
+        [
+            ([], 0x00, "none"),
+            ([.control], 0x01, "ctrl"),
+            ([.option], 0x04, "opt"),
+            ([.command], 0x08, "cmd"),
+            ([.control, .option], 0x05, "ctrl+opt"),
+            ([.control, .command], 0x09, "ctrl+cmd"),
+            ([.option, .command], 0x0C, "opt+cmd"),
+            ([.control, .option, .command], 0x0D, "ctrl+opt+cmd")
+        ]
+    }
+
+    private var visibleHardwareKeyCases: [(label: String, usage: HIDKeyboardUsage, fallback: String)] {
+        let letters: [(label: String, usage: HIDKeyboardUsage, fallback: String)] = (UInt8(ascii: "a")...UInt8(ascii: "z")).map { scalarValue in
+            let label = String(UnicodeScalar(scalarValue))
+            return (label: label, usage: HIDKeyboardUsage(rawValue: scalarValue - 93)!, fallback: "insertText(\"\(label)\")")
+        }
+        return letters + [
+            (label: "esc", usage: .escape, fallback: "insertText(\"\\u{1B}\")"),
+            (label: "tab", usage: .tab, fallback: "insertText(\"\\t\")"),
+            (label: "delete", usage: .deleteOrBackspace, fallback: "deleteBackward"),
+            (label: "space", usage: .space, fallback: "insertText(\" \")"),
+            (label: "return", usage: .returnOrEnter, fallback: "insertText(\"\\n\")")
+        ]
+    }
+
+    private func reportBytes(modifiers: UInt8 = 0, usage: UInt8 = 0) -> [UInt8] {
+        [modifiers, 0x00, usage, 0x00, 0x00, 0x00, 0x00, 0x00]
     }
 }

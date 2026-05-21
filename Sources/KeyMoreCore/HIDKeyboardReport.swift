@@ -143,7 +143,7 @@ public struct HIDKeyPress: Equatable, Sendable {
 
     public init(usage: HIDKeyboardUsage, modifiers: HIDModifier = []) {
         self.down = HIDKeyboardReport(modifiers: modifiers, usages: [usage.rawValue])
-        self.up = .empty
+        self.up = HIDKeyboardReport(modifiers: modifiers)
     }
 }
 

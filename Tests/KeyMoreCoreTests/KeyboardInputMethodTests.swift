@@ -19,6 +19,32 @@ final class KeyboardInputMethodTests: XCTestCase {
         ])
     }
 
+    func testEveryStickyModifierReportsCombinedStateWhileTogglingOnAndOff() {
+        let steps: [(key: SpecialKey, expectedModifiers: Set<SpecialKey>, expectedByte: UInt8)] = [
+            (.control, [.control], 0x01),
+            (.option, [.control, .option], 0x05),
+            (.command, [.control, .option, .command], 0x0D),
+            (.option, [.control, .command], 0x09),
+            (.control, [.command], 0x08),
+            (.command, [], 0x00)
+        ]
+        var context = KeyboardInputContext()
+
+        for step in steps {
+            let result = KeyboardInputMethod.resolve(.special(step.key), context: context)
+
+            XCTAssertEqual(result.nextContext.activeModifiers, step.expectedModifiers, "Unexpected active modifiers after \(step.key)")
+            XCTAssertEqual(result.outputEvents, [
+                .modifierState(
+                    keyLabel: step.key.displayTitle,
+                    report: HIDKeyboardReport(modifiers: HIDModifier(rawValue: step.expectedByte))
+                )
+            ])
+            XCTAssertTrue(result.shouldUpdateModifierButtons)
+            context = result.nextContext
+        }
+    }
+
     func testCommandCResolvesHardwareComboThenClearsOneShotModifier() throws {
         let commandOn = KeyboardInputMethod.resolve(.special(.command), context: KeyboardInputContext())
         let commandC = KeyboardInputMethod.resolve(.character("c"), context: commandOn.nextContext)
@@ -120,15 +146,53 @@ final class KeyboardInputMethodTests: XCTestCase {
             let expectedOutputs: [KeyboardOutputEvent] = [
                 .keyPress(
                     keyLabel: "c",
-                    keyPress: HIDKeyPress(
-                        down: HIDKeyboardReport(modifiers: HIDModifier(rawValue: expectedModifierByte), usages: [HIDKeyboardUsage.c.rawValue])
-                    ),
+                    keyPress: HIDKeyPress(usage: .c, modifiers: HIDModifier(rawValue: expectedModifierByte)),
                     fallback: fallback
                 )
             ] + (modifiers.isEmpty ? [] : [.modifierState(keyLabel: "modifiers", report: .empty)])
 
             XCTAssertEqual(result.outputEvents, expectedOutputs, "Unexpected output events for \(modifiers)")
             XCTAssertEqual(result.nextContext.activeModifiers, [])
+        }
+    }
+
+    func testEveryLetterResolvesExpectedHIDUsageFallbackAndClearsAcrossEveryStickyModifierCombo() throws {
+        for letterCase in allLetterCases {
+            for modifierCase in allModifierCases {
+                let context = KeyboardInputContext(activeModifiers: modifierCase.keys)
+                let result = KeyboardInputMethod.resolve(.character(letterCase.raw), context: context)
+                let expectedOutput = KeyboardOutputEvent.keyPress(
+                    keyLabel: letterCase.raw,
+                    keyPress: expectedKeyPress(usage: letterCase.usage, modifierByte: modifierCase.byte, isShifted: false),
+                    fallback: expectedCharacterFallback(letterCase.raw, modifiers: modifierCase.keys)
+                )
+                let expectedEvents = [expectedOutput] + expectedClearEvents(for: modifierCase.keys)
+
+                XCTAssertEqual(result.outputEvents, expectedEvents, "Unexpected output for \(modifierCase.name)+\(letterCase.raw)")
+                XCTAssertEqual(result.nextContext, KeyboardInputContext(activeModifiers: [], isShifted: false))
+                XCTAssertEqual(result.shouldUpdateModifierButtons, !modifierCase.keys.isEmpty)
+                XCTAssertFalse(result.shouldRebuildCharacterLabels)
+            }
+        }
+    }
+
+    func testEveryShiftedLetterKeepsShiftStateAndReleasesOnlyTheLetterAcrossEveryStickyModifierCombo() throws {
+        for letterCase in allLetterCases {
+            for modifierCase in allModifierCases {
+                let context = KeyboardInputContext(activeModifiers: modifierCase.keys, isShifted: true)
+                let result = KeyboardInputMethod.resolve(.character(letterCase.raw), context: context)
+                let expectedOutput = KeyboardOutputEvent.keyPress(
+                    keyLabel: letterCase.shifted,
+                    keyPress: expectedKeyPress(usage: letterCase.usage, modifierByte: modifierCase.byte, isShifted: true),
+                    fallback: expectedCharacterFallback(letterCase.shifted, modifiers: modifierCase.keys)
+                )
+                let expectedEvents = [expectedOutput] + expectedClearEvents(for: modifierCase.keys)
+
+                XCTAssertEqual(result.outputEvents, expectedEvents, "Unexpected shifted output for \(modifierCase.name)+\(letterCase.raw)")
+                XCTAssertEqual(result.nextContext, KeyboardInputContext(activeModifiers: [], isShifted: true))
+                XCTAssertEqual(result.shouldUpdateModifierButtons, !modifierCase.keys.isEmpty)
+                XCTAssertFalse(result.shouldRebuildCharacterLabels)
+            }
         }
     }
 
@@ -150,6 +214,20 @@ final class KeyboardInputMethodTests: XCTestCase {
         ])
     }
 
+    func testShiftTogglesOnAndOffWithoutEmittingKeyEvents() {
+        let shiftOn = KeyboardInputMethod.resolve(.shift, context: KeyboardInputContext())
+        let shiftOff = KeyboardInputMethod.resolve(.shift, context: shiftOn.nextContext)
+
+        XCTAssertEqual(shiftOn.nextContext, KeyboardInputContext(isShifted: true))
+        XCTAssertEqual(shiftOn.outputEvents, [])
+        XCTAssertTrue(shiftOn.shouldRebuildCharacterLabels)
+        XCTAssertFalse(shiftOn.shouldUpdateModifierButtons)
+        XCTAssertEqual(shiftOff.nextContext, KeyboardInputContext(isShifted: false))
+        XCTAssertEqual(shiftOff.outputEvents, [])
+        XCTAssertTrue(shiftOff.shouldRebuildCharacterLabels)
+        XCTAssertFalse(shiftOff.shouldUpdateModifierButtons)
+    }
+
     func testShiftedCommandCIncludesShiftAndCommandInHardwareReport() throws {
         let context = KeyboardInputContext(activeModifiers: [.command], isShifted: true)
         let result = KeyboardInputMethod.resolve(.character("c"), context: context)
@@ -159,7 +237,8 @@ final class KeyboardInputMethodTests: XCTestCase {
             .keyPress(
                 keyLabel: "C",
                 keyPress: HIDKeyPress(
-                    down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.c.rawValue])
+                    down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.c.rawValue]),
+                    up: HIDKeyboardReport(modifiers: .leftCommand)
                 ),
                 fallback: commandFallback
             ),
@@ -193,6 +272,36 @@ final class KeyboardInputMethodTests: XCTestCase {
         )
     }
 
+    func testEveryActionKeyResolvesExpectedHIDUsageFallbackAndClearsAcrossEveryModifierAndShiftCombo() {
+        for keyCase in visibleActionKeyCases {
+            for modifierCase in allModifierCases {
+                for isShifted in [false, true] {
+                    let context = KeyboardInputContext(activeModifiers: modifierCase.keys, isShifted: isShifted)
+                    let result = KeyboardInputMethod.resolve(keyCase.input, context: context)
+                    let expectedOutput = KeyboardOutputEvent.keyPress(
+                        keyLabel: keyCase.label,
+                        keyPress: expectedKeyPress(
+                            usage: keyCase.usage,
+                            modifierByte: modifierCase.byte,
+                            isShifted: isShifted
+                        ),
+                        fallback: KeyResolution(action: keyCase.fallback, outcome: .textProxyOnly)
+                    )
+                    let expectedEvents = [expectedOutput] + expectedClearEvents(for: modifierCase.keys)
+
+                    XCTAssertEqual(
+                        result.outputEvents,
+                        expectedEvents,
+                        "Unexpected output for \(modifierCase.name)+\(isShifted ? "shift+" : "")\(keyCase.label)"
+                    )
+                    XCTAssertEqual(result.nextContext, KeyboardInputContext(activeModifiers: [], isShifted: isShifted))
+                    XCTAssertEqual(result.shouldUpdateModifierButtons, !modifierCase.keys.isEmpty)
+                    XCTAssertFalse(result.shouldRebuildCharacterLabels)
+                }
+            }
+        }
+    }
+
     func testBottomRowKeyCombosIncludeActiveModifiersShiftAndClearOneShotModifiers() {
         let context = KeyboardInputContext(activeModifiers: [.control, .option], isShifted: true)
 
@@ -211,6 +320,7 @@ final class KeyboardInputMethodTests: XCTestCase {
                             label,
                             usage: usage,
                             modifiers: [.leftControl, .leftOption, .leftShift],
+                            releaseModifiers: [.leftControl, .leftOption],
                             fallback: fallback
                         ),
                         .modifierState(keyLabel: "modifiers", report: .empty)
@@ -258,7 +368,10 @@ final class KeyboardInputMethodTests: XCTestCase {
         XCTAssertEqual(result.outputEvents, [
             .keyPress(
                 keyLabel: "tab",
-                keyPress: HIDKeyPress(down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.tab.rawValue])),
+                keyPress: HIDKeyPress(
+                    down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.tab.rawValue]),
+                    up: HIDKeyboardReport(modifiers: .leftCommand)
+                ),
                 fallback: KeyResolution(action: .insertText("\t"), outcome: .textProxyOnly)
             ),
             .modifierState(keyLabel: "modifiers", report: .empty)
@@ -296,7 +409,7 @@ final class KeyboardInputMethodTests: XCTestCase {
             .modifierState(keyLabel: "cmd", report: HIDKeyboardReport(modifiers: .leftCommand)),
             .keyPress(
                 keyLabel: "c",
-                keyPress: HIDKeyPress(down: HIDKeyboardReport(modifiers: .leftCommand, usages: [HIDKeyboardUsage.c.rawValue])),
+                keyPress: HIDKeyPress(usage: .c, modifiers: .leftCommand),
                 fallback: commandFallback
             ),
             .modifierState(keyLabel: "modifiers", report: .empty),
@@ -304,14 +417,17 @@ final class KeyboardInputMethodTests: XCTestCase {
             .modifierState(keyLabel: "opt", report: HIDKeyboardReport(modifiers: [.leftControl, .leftOption])),
             .keyPress(
                 keyLabel: "tab",
-                keyPress: HIDKeyPress(down: HIDKeyboardReport(modifiers: [.leftControl, .leftOption], usages: [HIDKeyboardUsage.tab.rawValue])),
+                keyPress: HIDKeyPress(usage: .tab, modifiers: [.leftControl, .leftOption]),
                 fallback: KeyResolution(action: .insertText("\t"), outcome: .textProxyOnly)
             ),
             .modifierState(keyLabel: "modifiers", report: .empty),
             .modifierState(keyLabel: "cmd", report: HIDKeyboardReport(modifiers: .leftCommand)),
             .keyPress(
                 keyLabel: "V",
-                keyPress: HIDKeyPress(down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.v.rawValue])),
+                keyPress: HIDKeyPress(
+                    down: HIDKeyboardReport(modifiers: [.leftShift, .leftCommand], usages: [HIDKeyboardUsage.v.rawValue]),
+                    up: HIDKeyboardReport(modifiers: .leftCommand)
+                ),
                 fallback: commandFallback
             ),
             .modifierState(keyLabel: "modifiers", report: .empty),
@@ -342,6 +458,67 @@ final class KeyboardInputMethodTests: XCTestCase {
         }
     }
 
+    func testLanguageLayoutsFollowIOSLanguageFamilies() {
+        let english = KeyboardLanguageLayout.layout(for: "en-US")
+        XCTAssertEqual(english.alphabeticRows[0], ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"])
+        XCTAssertEqual(english.spaceTitle, "space")
+
+        let french = KeyboardLanguageLayout.layout(for: "fr-FR")
+        XCTAssertEqual(french.alphabeticRows[0], ["a", "z", "e", "r", "t", "y", "u", "i", "o", "p"])
+        XCTAssertEqual(french.spaceTitle, "espace")
+
+        let german = KeyboardLanguageLayout.layout(for: "de-DE")
+        XCTAssertEqual(german.alphabeticRows[0], ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"])
+        XCTAssertEqual(german.alphabeticRows[2].first, "y")
+    }
+
+    func testLanguageLayoutsIncludeLocaleSpecificVisibleKeysAndDirection() {
+        let spanish = KeyboardLanguageLayout.layout(for: "es-ES")
+        XCTAssertTrue(spanish.alphabeticRows[1].contains("\u{00F1}"))
+
+        let turkish = KeyboardLanguageLayout.layout(for: "tr-TR")
+        XCTAssertTrue(turkish.alphabeticRows[0].contains("\u{0131}"))
+        XCTAssertTrue(turkish.alphabeticRows[1].contains("\u{015F}"))
+
+        let arabic = KeyboardLanguageLayout.layout(for: "ar-SA")
+        XCTAssertTrue(arabic.prefersRightToLeft)
+        XCTAssertEqual(arabic.spaceTitle, "\u{0645}\u{0633}\u{0627}\u{0641}\u{0629}")
+
+        let hebrew = KeyboardLanguageLayout.layout(for: "he-IL")
+        XCTAssertTrue(hebrew.prefersRightToLeft)
+        XCTAssertEqual(hebrew.spaceTitle, "\u{05E8}\u{05D5}\u{05D5}\u{05D7}")
+    }
+
+    func testLanguageLayoutFallsBackToPreferredIOSLanguages() {
+        let layout = KeyboardLanguageLayout.layout(for: "mul", preferredLanguages: ["de-DE", "en-US"])
+
+        XCTAssertEqual(layout.languageIdentifier, "de-DE")
+        XCTAssertEqual(layout.alphabeticRows[0], ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"])
+    }
+
+    func testAutoCapitalizationMatchesStockSentenceBoundaries() {
+        XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: nil))
+        XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: ""))
+        XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello. "))
+        XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello!  "))
+        XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello\n"))
+
+        XCTAssertFalse(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello"))
+        XCTAssertFalse(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello "))
+        XCTAssertFalse(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: "Hello, "))
+    }
+
+    func testDoubleSpacePeriodOnlyAppliesAfterAWordSpace() {
+        XCTAssertTrue(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello "))
+        XCTAssertTrue(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello world "))
+
+        XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: nil))
+        XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: ""))
+        XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello"))
+        XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello. "))
+        XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello  "))
+    }
+
     private var commandFallback: KeyResolution {
         KeyResolution(
             action: .noOperation("Command shortcuts require a hardware-equivalent event path"),
@@ -349,15 +526,93 @@ final class KeyboardInputMethodTests: XCTestCase {
         )
     }
 
+    private var allModifierCases: [(keys: Set<SpecialKey>, byte: UInt8, name: String)] {
+        [
+            ([], 0x00, "none"),
+            ([.control], 0x01, "ctrl"),
+            ([.option], 0x04, "opt"),
+            ([.command], 0x08, "cmd"),
+            ([.control, .option], 0x05, "ctrl+opt"),
+            ([.control, .command], 0x09, "ctrl+cmd"),
+            ([.option, .command], 0x0C, "opt+cmd"),
+            ([.control, .option, .command], 0x0D, "ctrl+opt+cmd")
+        ]
+    }
+
+    private var allLetterCases: [(raw: String, shifted: String, usage: HIDKeyboardUsage)] {
+        let letters: [(raw: String, shifted: String, usage: HIDKeyboardUsage)] = (UInt8(ascii: "a")...UInt8(ascii: "z")).map { scalarValue in
+            let raw = String(UnicodeScalar(scalarValue))
+            return (raw: raw, shifted: raw.uppercased(), usage: HIDKeyboardUsage(rawValue: scalarValue - 93)!)
+        }
+        return letters
+    }
+
+    private var visibleActionKeyCases: [(input: KeyboardInput, label: String, usage: HIDKeyboardUsage, fallback: TextProxyAction)] {
+        [
+            (.special(.escape), "esc", .escape, .insertText("\u{1B}")),
+            (.special(.tab), "tab", .tab, .insertText("\t")),
+            (.delete, "delete", .deleteOrBackspace, .deleteBackward),
+            (.space, "space", .space, .insertText(" ")),
+            (.return, "return", .returnOrEnter, .insertText("\n"))
+        ]
+    }
+
+    private func expectedCharacterFallback(_ character: String, modifiers: Set<SpecialKey>) -> KeyResolution {
+        guard let scalar = character.uppercased().unicodeScalars.first else {
+            return KeyResolution(action: .noOperation("Empty character"), outcome: .unknown)
+        }
+
+        if modifiers.contains(.command) {
+            return commandFallback
+        }
+
+        if modifiers.contains(.control),
+           scalar.value >= 65,
+           scalar.value <= 90,
+           let controlScalar = UnicodeScalar(scalar.value - 64) {
+            return KeyResolution(action: .insertText(String(controlScalar)), outcome: .textProxyOnly)
+        }
+
+        if modifiers.contains(.option) {
+            return KeyResolution(action: .insertText("\u{1B}" + character), outcome: .textProxyOnly)
+        }
+
+        return KeyResolution(action: .insertText(character), outcome: .textProxyOnly)
+    }
+
+    private func expectedKeyPress(
+        usage: HIDKeyboardUsage,
+        modifierByte: UInt8,
+        isShifted: Bool
+    ) -> HIDKeyPress {
+        var downModifiers = HIDModifier(rawValue: modifierByte)
+        if isShifted {
+            downModifiers.insert(.leftShift)
+        }
+        let releaseModifiers = HIDModifier(rawValue: modifierByte)
+        return HIDKeyPress(
+            down: HIDKeyboardReport(modifiers: downModifiers, usages: [usage.rawValue]),
+            up: HIDKeyboardReport(modifiers: releaseModifiers)
+        )
+    }
+
+    private func expectedClearEvents(for modifiers: Set<SpecialKey>) -> [KeyboardOutputEvent] {
+        modifiers.isEmpty ? [] : [.modifierState(keyLabel: "modifiers", report: .empty)]
+    }
+
     private func bottomRowKeyPressEvent(
         _ label: String,
         usage: HIDKeyboardUsage,
         modifiers: HIDModifier = [],
+        releaseModifiers: HIDModifier = [],
         fallback: TextProxyAction
     ) -> KeyboardOutputEvent {
         .keyPress(
             keyLabel: label,
-            keyPress: HIDKeyPress(down: HIDKeyboardReport(modifiers: modifiers, usages: [usage.rawValue])),
+            keyPress: HIDKeyPress(
+                down: HIDKeyboardReport(modifiers: modifiers, usages: [usage.rawValue]),
+                up: HIDKeyboardReport(modifiers: releaseModifiers)
+            ),
             fallback: KeyResolution(action: fallback, outcome: .textProxyOnly)
         )
     }

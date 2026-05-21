@@ -1,109 +1,144 @@
+import KeyboardExtensionKit
 import KeyMoreCore
+import SwiftUI
 import UIKit
 import os
 
-final class KeyboardViewController: UIInputViewController {
-    private static let keyboardHeight: CGFloat = 300
+private enum KeyboardMetrics {
+    static let keyboardHeight: CGFloat = 272
+    static let outerInset: CGFloat = 3
+    static let topInset: CGFloat = 6
+    static let bottomInset: CGFloat = 6
+    static let rowSpacing: CGFloat = 7
+    static let keySpacing: CGFloat = 6
+    static let baseKeyWidth: CGFloat = 34
+    static let keyHeight: CGFloat = 43
+    static let keyCornerRadius: CGFloat = 5
+}
 
+private enum KeyboardKeyStyle {
+    case character
+    case action
+    case modifier
+    case space
+
+    var font: Font {
+        switch self {
+        case .character:
+            return .system(size: 22, weight: .regular)
+        case .action, .modifier, .space:
+            return .system(size: 16, weight: .regular)
+        }
+    }
+
+    func backgroundColor(isSelected: Bool) -> Color {
+        if isSelected {
+            return .keyMoreSelectedKeyBackground
+        }
+
+        switch self {
+        case .character, .space:
+            return .keyMoreCharacterKeyBackground
+        case .action, .modifier:
+            return .keyMoreActionKeyBackground
+        }
+    }
+
+    func foregroundColor(isSelected: Bool) -> Color {
+        isSelected ? .keyMoreSelectedKeyForeground : .keyMoreKeyForeground
+    }
+}
+
+private enum KeyboardLayoutMode {
+    case alphabetic
+    case numeric
+    case symbols
+}
+
+@MainActor
+private final class KeyMoreKeyboardState: ObservableObject {
+    @Published var inputContext = KeyboardInputContext()
+    @Published var layoutMode = KeyboardLayoutMode.alphabetic
+    @Published var languageLayout = KeyboardLanguageLayout.layout(for: nil)
+    @Published var needsInputModeSwitchKey = true
+}
+
+private struct KeyMoreKeyboardActions {
+    let specialKey: (SpecialKey) -> Void
+    let character: (String) -> Void
+    let shift: () -> Void
+    let delete: () -> Void
+    let space: () -> Void
+    let returnKey: () -> Void
+    let switchLayout: (KeyboardLayoutMode) -> Void
+    let globe: (UIView, UIEvent) -> Void
+}
+
+final class KeyboardViewController: UIInputViewController {
     private let logger = Logger(subsystem: "com.rudironsoni.KeyMore.Keyboard", category: "Keyboard")
-    private let stackView = UIStackView()
+    private let keyboardState = KeyMoreKeyboardState()
     private var heightConstraint: NSLayoutConstraint?
-    private var inputContext = KeyboardInputContext()
-    private var modifierButtons: [SpecialKey: UIButton] = [:]
-    private var characterButtons: [UIButton: String] = [:]
+    private var hostingController: UIHostingController<KeyMoreKeyboardView>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         configureKeyboard()
+        syncLanguageAndTextBehavior()
+    }
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        keyboardState.needsInputModeSwitchKey = needsInputModeSwitchKey
+    }
+
+    override func textDidChange(_ textInput: UITextInput?) {
+        super.textDidChange(textInput)
+        syncLanguageAndTextBehavior()
+    }
+
+    override func selectionDidChange(_ textInput: UITextInput?) {
+        super.selectionDidChange(textInput)
+        syncLanguageAndTextBehavior()
     }
 
     private func configureKeyboard() {
         if heightConstraint == nil {
-            let constraint = view.heightAnchor.constraint(equalToConstant: Self.keyboardHeight)
+            let constraint = view.heightAnchor.constraint(equalToConstant: KeyboardMetrics.keyboardHeight)
             constraint.priority = .required
             constraint.isActive = true
             heightConstraint = constraint
         }
 
-        stackView.axis = .vertical
-        stackView.spacing = 8
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stackView)
+        view.backgroundColor = .keyMoreKeyboardBackground
+
+        let keyboardView = KeyMoreKeyboardView(
+            state: keyboardState,
+            actions: KeyMoreKeyboardActions(
+                specialKey: { [weak self] in self?.handleSpecialKey($0) },
+                character: { [weak self] in self?.handleCharacter($0) },
+                shift: { [weak self] in self?.toggleShift() },
+                delete: { [weak self] in self?.handleInput(.delete) },
+                space: { [weak self] in self?.handleSpace() },
+                returnKey: { [weak self] in self?.handleInput(.return) },
+                switchLayout: { [weak self] in self?.switchLayout(to: $0) },
+                globe: { [weak self] from, event in self?.handleInputModeList(from: from, with: event) }
+            )
+        )
+        let hostingController = UIHostingController(rootView: keyboardView)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+        hostingController.didMove(toParent: self)
+        self.hostingController = hostingController
 
         NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
-            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
-            stackView.topAnchor.constraint(equalTo: view.topAnchor, constant: 6),
-            stackView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -6)
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-
-        stackView.addArrangedSubview(makeSpecialRow())
-        stackView.addArrangedSubview(makeCharacterRow("qwertyuiop"))
-        stackView.addArrangedSubview(makeCharacterRow("asdfghjkl"))
-        stackView.addArrangedSubview(makeShiftRow())
-        stackView.addArrangedSubview(makeBottomRow())
-    }
-
-    private func makeSpecialRow() -> UIStackView {
-        let row = makeRow()
-        for key in [SpecialKey.escape, .control, .option, .command, .tab] {
-            let button = makeButton(title: key.displayTitle)
-            button.addAction(UIAction { [weak self] _ in self?.handleSpecialKey(key) }, for: .touchUpInside)
-            row.addArrangedSubview(button)
-
-            if [.control, .option, .command].contains(key) {
-                modifierButtons[key] = button
-            }
-        }
-        return row
-    }
-
-    private func makeCharacterRow(_ characters: String) -> UIStackView {
-        let row = makeRow()
-        for character in characters.map(String.init) {
-            let button = makeButton(title: displayCharacter(character))
-            characterButtons[button] = character
-            button.addAction(UIAction { [weak self] _ in self?.handleCharacter(character) }, for: .touchUpInside)
-            row.addArrangedSubview(button)
-        }
-        return row
-    }
-
-    private func makeShiftRow() -> UIStackView {
-        let row = makeRow()
-        let shift = makeButton(title: "shift", symbolName: "shift.fill", weight: 1.35)
-        shift.addAction(UIAction { [weak self] _ in self?.toggleShift() }, for: .touchUpInside)
-        row.addArrangedSubview(shift)
-
-        for character in "zxcvbnm".map(String.init) {
-            let button = makeButton(title: displayCharacter(character))
-            characterButtons[button] = character
-            button.addAction(UIAction { [weak self] _ in self?.handleCharacter(character) }, for: .touchUpInside)
-            row.addArrangedSubview(button)
-        }
-
-        let delete = makeButton(title: "delete", symbolName: "delete.left", weight: 1.35)
-        delete.addAction(UIAction { [weak self] _ in self?.handleInput(.delete) }, for: .touchUpInside)
-        row.addArrangedSubview(delete)
-        return row
-    }
-
-    private func makeBottomRow() -> UIStackView {
-        let row = makeRow()
-
-        let globe = makeButton(title: "next", symbolName: "globe", weight: 1.15)
-        globe.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
-        row.addArrangedSubview(globe)
-
-        let space = makeButton(title: "space", weight: 2.4)
-        space.addAction(UIAction { [weak self] _ in self?.handleInput(.space) }, for: .touchUpInside)
-        row.addArrangedSubview(space)
-
-        let enter = makeButton(title: "return", symbolName: "return", weight: 1.35)
-        enter.addAction(UIAction { [weak self] _ in self?.handleInput(.return) }, for: .touchUpInside)
-        row.addArrangedSubview(enter)
-
-        return row
     }
 
     private func handleSpecialKey(_ key: SpecialKey) {
@@ -117,20 +152,26 @@ final class KeyboardViewController: UIInputViewController {
         handleInput(.character(rawCharacter))
     }
 
+    private func handleSpace() {
+        guard keyboardState.inputContext.activeModifiers.isEmpty,
+              KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(
+                documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput
+              ) else {
+            handleInput(.space)
+            return
+        }
+
+        textDocumentProxy.deleteBackward()
+        textDocumentProxy.insertText(". ")
+        syncLanguageAndTextBehavior()
+    }
+
     private func handleInput(_ input: KeyboardInput) {
-        let result = KeyboardInputMethod.resolve(input, context: inputContext)
-        inputContext = result.nextContext
+        let result = KeyboardInputMethod.resolve(input, context: keyboardState.inputContext)
+        keyboardState.inputContext = result.nextContext
 
         for outputEvent in result.outputEvents {
             apply(outputEvent)
-        }
-
-        if result.shouldRebuildCharacterLabels {
-            rebuildCharacterLabels()
-        }
-
-        if result.shouldUpdateModifierButtons {
-            updateModifierButtons()
         }
     }
 
@@ -149,8 +190,10 @@ final class KeyboardViewController: UIInputViewController {
         switch resolution.action {
         case .insertText(let text):
             textDocumentProxy.insertText(text)
+            syncLanguageAndTextBehavior()
         case .deleteBackward:
             textDocumentProxy.deleteBackward()
+            syncLanguageAndTextBehavior()
         case .noOperation:
             break
         }
@@ -160,54 +203,40 @@ final class KeyboardViewController: UIInputViewController {
         handleInput(.shift)
     }
 
-    private func rebuildCharacterLabels() {
-        for (button, character) in characterButtons {
-            button.setTitle(displayCharacter(character), for: .normal)
-        }
+    private func switchLayout(to mode: KeyboardLayoutMode) {
+        keyboardState.layoutMode = mode
+        var context = keyboardState.inputContext
+        context.isShifted = false
+        keyboardState.inputContext = context
     }
 
-    private func updateModifierButtons() {
-        for (key, button) in modifierButtons {
-            button.isSelected = inputContext.activeModifiers.contains(key)
-            button.backgroundColor = button.isSelected ? .systemBlue : .secondarySystemBackground
-            button.setTitleColor(button.isSelected ? .white : .label, for: .normal)
+    private func syncLanguageAndTextBehavior() {
+        let nextLanguageLayout = KeyboardLanguageLayout.layout(
+            for: textDocumentProxy.documentInputMode?.primaryLanguage ?? primaryLanguage,
+            preferredLanguages: Locale.preferredLanguages
+        )
+        if nextLanguageLayout != keyboardState.languageLayout {
+            keyboardState.languageLayout = nextLanguageLayout
         }
+
+        guard keyboardState.layoutMode == .alphabetic else {
+            return
+        }
+
+        let shouldShift = KeyboardTextBehavior.shouldAutoCapitalize(
+            documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput
+        )
+        guard keyboardState.inputContext.isShifted != shouldShift else {
+            return
+        }
+
+        var context = keyboardState.inputContext
+        context.isShifted = shouldShift
+        keyboardState.inputContext = context
     }
 
     private func displayCharacter(_ character: String) -> String {
-        inputContext.isShifted ? character.uppercased() : character.lowercased()
-    }
-
-    private func makeRow() -> UIStackView {
-        let row = UIStackView()
-        row.axis = .horizontal
-        row.spacing = 4
-        row.distribution = .fillProportionally
-        row.alignment = .fill
-        return row
-    }
-
-    private func makeButton(title: String, symbolName: String? = nil, weight: CGFloat = 1) -> UIButton {
-        var configuration = UIButton.Configuration.filled()
-        configuration.title = title
-        if let symbolName {
-            configuration.image = UIImage(systemName: symbolName)
-            configuration.title = nil
-        }
-        configuration.baseBackgroundColor = .secondarySystemBackground
-        configuration.baseForegroundColor = .label
-        configuration.cornerStyle = .medium
-        configuration.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
-
-        let button = KeyboardKeyButton(weight: weight, configuration: configuration)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
-        button.titleLabel?.adjustsFontSizeToFitWidth = true
-        button.titleLabel?.minimumScaleFactor = 0.58
-        button.titleLabel?.lineBreakMode = .byClipping
-        button.titleLabel?.numberOfLines = 1
-        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-        button.accessibilityLabel = title
-        return button
+        keyboardState.inputContext.isShifted ? character.uppercased() : character.lowercased()
     }
 
     private func emitKeyPress(keyLabel: String, keyPress: HIDKeyPress?, fallback: KeyResolution) {
@@ -247,21 +276,241 @@ final class KeyboardViewController: UIInputViewController {
     }
 }
 
-private final class KeyboardKeyButton: UIButton {
-    private let keyWeight: CGFloat
+private struct KeyMoreKeyboardView: View {
+    @ObservedObject var state: KeyMoreKeyboardState
+    let actions: KeyMoreKeyboardActions
 
-    init(weight: CGFloat, configuration: UIButton.Configuration) {
-        self.keyWeight = weight
-        super.init(frame: .zero)
-        self.configuration = configuration
+    var body: some View {
+        VStack(spacing: KeyboardMetrics.rowSpacing) {
+            specialRow
+            switch state.layoutMode {
+            case .alphabetic:
+                characterRow(state.languageLayout.alphabeticRows[0])
+                characterRow(state.languageLayout.alphabeticRows[1], horizontalInset: 18)
+                shiftRow(state.languageLayout.alphabeticRows[2])
+                alphabeticBottomRow
+            case .numeric:
+                characterRow(state.languageLayout.numericRows[0])
+                characterRow(state.languageLayout.numericRows[1])
+                alternateShiftRow(toggleTitle: "#+=", targetMode: .symbols)
+                alternateBottomRow(modeTitle: "ABC", targetMode: .alphabetic)
+            case .symbols:
+                characterRow(state.languageLayout.symbolRows[0])
+                characterRow(state.languageLayout.symbolRows[1])
+                alternateShiftRow(toggleTitle: "123", targetMode: .numeric)
+                alternateBottomRow(modeTitle: "ABC", targetMode: .alphabetic)
+            }
+        }
+        .padding(.top, KeyboardMetrics.topInset)
+        .padding(.leading, KeyboardMetrics.outerInset)
+        .padding(.trailing, KeyboardMetrics.outerInset)
+        .padding(.bottom, KeyboardMetrics.bottomInset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.keyMoreKeyboardBackground)
     }
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    private var specialRow: some View {
+        row {
+            ForEach(SpecialKey.allCases, id: \.id) { key in
+                keyButton(
+                    title: key.displayTitle,
+                    style: .modifier,
+                    isSelected: state.inputContext.activeModifiers.contains(key)
+                ) {
+                    actions.specialKey(key)
+                }
+            }
+        }
     }
 
-    override var intrinsicContentSize: CGSize {
-        CGSize(width: 44 * keyWeight, height: 40)
+    private func characterRow(_ characters: [String], horizontalInset: CGFloat = 0) -> some View {
+        row(horizontalInset: horizontalInset) {
+            ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
+                keyButton(title: displayCharacter(character), style: .character) {
+                    actions.character(character)
+                }
+            }
+        }
     }
+
+    private func shiftRow(_ characters: [String]) -> some View {
+        row {
+            commandButton(symbolName: "shift", weight: 1.45, isSelected: state.inputContext.isShifted) {
+                actions.shift()
+            }
+            ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
+                keyButton(title: displayCharacter(character), style: .character) {
+                    actions.character(character)
+                }
+            }
+            commandButton(symbolName: "delete.left", weight: 1.45) {
+                actions.delete()
+            }
+        }
+    }
+
+    private func alternateShiftRow(toggleTitle: String, targetMode: KeyboardLayoutMode) -> some View {
+        row {
+            keyButton(title: toggleTitle, style: .action, weight: 1.45) {
+                actions.switchLayout(targetMode)
+            }
+            ForEach(Array(state.languageLayout.punctuationRow.enumerated()), id: \.offset) { _, character in
+                keyButton(title: character, style: .character) {
+                    actions.character(character)
+                }
+            }
+            commandButton(symbolName: "delete.left", weight: 1.45) {
+                actions.delete()
+            }
+        }
+    }
+
+    private var alphabeticBottomRow: some View {
+        row {
+            keyButton(title: "123", style: .action, weight: 1.2) {
+                actions.switchLayout(.numeric)
+            }
+            globeButton
+            keyButton(title: state.languageLayout.spaceTitle, style: .space, weight: 5.2) {
+                actions.space()
+            }
+            keyButton(title: "return", style: .action, weight: 2.05) {
+                actions.returnKey()
+            }
+        }
+    }
+
+    private func alternateBottomRow(modeTitle: String, targetMode: KeyboardLayoutMode) -> some View {
+        row {
+            keyButton(title: modeTitle, style: .action, weight: 1.2) {
+                actions.switchLayout(targetMode)
+            }
+            globeButton
+            keyButton(title: state.languageLayout.spaceTitle, style: .space, weight: 5.2) {
+                actions.space()
+            }
+            keyButton(title: "return", style: .action, weight: 2.05) {
+                actions.returnKey()
+            }
+        }
+    }
+
+    private var globeButton: some View {
+        KEGlobeButton(
+            width: KeyboardMetrics.baseKeyWidth * 1.18,
+            height: KeyboardMetrics.keyHeight,
+            cornerRadius: KeyboardMetrics.keyCornerRadius,
+            foregroundColor: KeyboardKeyStyle.action.foregroundColor(isSelected: false),
+            backgroundInactiveColor: KeyboardKeyStyle.action.backgroundColor(isSelected: false),
+            backgroundActiveColor: .keyMorePressedKeyBackground,
+            onGlobeHandler: actions.globe
+        )
+        .opacity(state.needsInputModeSwitchKey ? 1 : 0.55)
+        .shadow(color: .keyMoreKeyShadow, radius: 0, x: 0, y: 1)
+        .accessibilityLabel("next")
+    }
+
+    private func row<Content: View>(
+        horizontalInset: CGFloat = 0,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: KeyboardMetrics.keySpacing, content: content)
+            .padding(.horizontal, horizontalInset)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .environment(\.layoutDirection, state.languageLayout.prefersRightToLeft ? .rightToLeft : .leftToRight)
+    }
+
+    private func keyButton(
+        title: String,
+        style: KeyboardKeyStyle,
+        weight: CGFloat = 1,
+        isSelected: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        KEKeyButton(
+            text: title,
+            width: nil,
+            height: KeyboardMetrics.keyHeight,
+            maxWidth: .infinity,
+            cornerRadius: KeyboardMetrics.keyCornerRadius,
+            foregroundColor: style.foregroundColor(isSelected: isSelected),
+            backgroundInactiveColor: style.backgroundColor(isSelected: isSelected),
+            backgroundActiveColor: .keyMorePressedKeyBackground,
+            onKeyHandler: action
+        )
+        .font(style.font)
+        .lineLimit(1)
+        .minimumScaleFactor(0.62)
+        .frame(width: fixedWidth(for: weight))
+        .shadow(color: .keyMoreKeyShadow, radius: 0, x: 0, y: 1)
+        .accessibilityLabel(title)
+    }
+
+    private func commandButton(
+        symbolName: String,
+        weight: CGFloat,
+        isSelected: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        KECommandButton(
+            image: Image(systemName: symbolName),
+            width: KeyboardMetrics.baseKeyWidth * weight,
+            height: KeyboardMetrics.keyHeight,
+            cornerRadius: KeyboardMetrics.keyCornerRadius,
+            foregroundColor: KeyboardKeyStyle.action.foregroundColor(isSelected: isSelected),
+            backgroundInactiveColor: KeyboardKeyStyle.action.backgroundColor(isSelected: isSelected),
+            backgroundActiveColor: .keyMorePressedKeyBackground,
+            onCommandHandler: action
+        )
+        .font(.system(size: 18, weight: .regular))
+        .shadow(color: .keyMoreKeyShadow, radius: 0, x: 0, y: 1)
+        .accessibilityLabel(symbolName)
+    }
+
+    private func fixedWidth(for weight: CGFloat) -> CGFloat? {
+        weight == 1 ? nil : KeyboardMetrics.baseKeyWidth * weight
+    }
+
+    private func displayCharacter(_ character: String) -> String {
+        state.inputContext.isShifted ? character.uppercased() : character.lowercased()
+    }
+}
+
+private extension UIColor {
+    static let keyMoreKeyboardBackground = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1)
+            : UIColor(red: 0.82, green: 0.84, blue: 0.87, alpha: 1)
+    }
+}
+
+private extension Color {
+    static let keyMoreKeyboardBackground = Color(UIColor.keyMoreKeyboardBackground)
+    static let keyMoreCharacterKeyBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.39, green: 0.39, blue: 0.41, alpha: 1)
+            : .white
+    })
+    static let keyMoreActionKeyBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.28, green: 0.28, blue: 0.30, alpha: 1)
+            : UIColor(red: 0.67, green: 0.70, blue: 0.75, alpha: 1)
+    })
+    static let keyMoreSelectedKeyBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.61, green: 0.61, blue: 0.64, alpha: 1)
+            : .white
+    })
+    static let keyMorePressedKeyBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.50, green: 0.50, blue: 0.53, alpha: 1)
+            : UIColor(red: 0.78, green: 0.80, blue: 0.84, alpha: 1)
+    })
+    static let keyMoreKeyForeground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark ? .white : .black
+    })
+    static let keyMoreSelectedKeyForeground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark ? .white : .black
+    })
+    static let keyMoreKeyShadow = Color.black.opacity(0.30)
 }

@@ -1,0 +1,15 @@
+{
+  "originHash" : "865cf3963302944b0bb60b120c15c049341d56312bea25388f754c520684ca5d",
+  "pins" : [
+    {
+      "identity" : "keyboardextensionkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Kyome22/KeyboardExtensionKit.git",
+      "state" : {
+        "revision" : "9e4f760238420981c4c5fce1b28343d7f5d9ef89",
+        "version" : "0.0.3"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -25,6 +25,7 @@
 		740700C7B42298202F36E15B /* HIDKeyboardReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEE35475B5C5EC736CDE287A /* HIDKeyboardReport.swift */; };
 		75AB2C4B0C64FE6F8C9B7FB7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0630CD7F7770148DB2E2CE1D /* SceneDelegate.swift */; };
 		A02D9887103F2FA162A195E0 /* HIDBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3DB0E2CFA85C12724DED1FB /* HIDBridge.swift */; };
+		A4DCC10A98C6B3E8E12061A0 /* KeyboardExtensionKit in Frameworks */ = {isa = PBXBuildFile; productRef = C6466B12B4790DDF0FC92EB3 /* KeyboardExtensionKit */; };
 		A77869C7FBDE744F7159690C /* Feasibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3D0C2EDCE916D48D988705 /* Feasibility.swift */; };
 		AB146ADAFC20178E45FC093B /* HIDKeyboardReportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2EA6EA12B106640029FD14 /* HIDKeyboardReportTests.swift */; };
 		ACC52D647C01E6B31702EBE4 /* KeyMoreCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 488D40C82B6705FBDC8B9D7D /* KeyMoreCore.framework */; };
@@ -144,6 +145,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC20B5B75EAB518677FB7E47 /* KeyMoreCore.framework in Frameworks */,
+				A4DCC10A98C6B3E8E12061A0 /* KeyboardExtensionKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -303,6 +305,7 @@
 			);
 			name = KeyMoreKeyboard;
 			packageProductDependencies = (
+				C6466B12B4790DDF0FC92EB3 /* KeyboardExtensionKit */,
 			);
 			productName = KeyMoreKeyboard;
 			productReference = 28185ACB64EEC499404AABED /* KeyMoreKeyboard.appex */;
@@ -357,6 +360,9 @@
 			);
 			mainGroup = 86227FE15C1D39DA2CF93213;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4865E2E965D8D349315D435F /* XCRemoteSwiftPackageReference "KeyboardExtensionKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0BC1076E54A2A3AAF959AA2A /* Products */;
 			projectDirPath = "";
@@ -770,6 +776,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4865E2E965D8D349315D435F /* XCRemoteSwiftPackageReference "KeyboardExtensionKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Kyome22/KeyboardExtensionKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C6466B12B4790DDF0FC92EB3 /* KeyboardExtensionKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4865E2E965D8D349315D435F /* XCRemoteSwiftPackageReference "KeyboardExtensionKit" */;
+			productName = KeyboardExtensionKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4750EA7A17AAAD990815693E /* Project object */;
 }

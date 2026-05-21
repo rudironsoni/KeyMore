@@ -44,6 +44,202 @@ public struct KeyboardInputResult: Equatable, Sendable {
     }
 }
 
+public struct KeyboardLanguageLayout: Equatable, Sendable {
+    public let languageIdentifier: String
+    public let alphabeticRows: [[String]]
+    public let numericRows: [[String]]
+    public let symbolRows: [[String]]
+    public let punctuationRow: [String]
+    public let spaceTitle: String
+    public let prefersRightToLeft: Bool
+
+    public init(
+        languageIdentifier: String,
+        alphabeticRows: [[String]],
+        numericRows: [[String]] = Self.defaultNumericRows,
+        symbolRows: [[String]] = Self.defaultSymbolRows,
+        punctuationRow: [String] = [".", ",", "?", "!", "'"],
+        spaceTitle: String = "space",
+        prefersRightToLeft: Bool = false
+    ) {
+        self.languageIdentifier = languageIdentifier
+        self.alphabeticRows = alphabeticRows
+        self.numericRows = numericRows
+        self.symbolRows = symbolRows
+        self.punctuationRow = punctuationRow
+        self.spaceTitle = spaceTitle
+        self.prefersRightToLeft = prefersRightToLeft
+    }
+
+    public static func layout(
+        for primaryLanguage: String?,
+        preferredLanguages: [String] = []
+    ) -> KeyboardLanguageLayout {
+        let identifier = normalizedIdentifier(primaryLanguage, preferredLanguages: preferredLanguages)
+        let languageCode = identifier.split(separator: "-").first.map(String.init) ?? "en"
+
+        switch languageCode {
+        case "fr":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    letters("azertyuiop"),
+                    letters("qsdfghjklm"),
+                    letters("wxcvbn")
+                ],
+                spaceTitle: "espace"
+            )
+        case "de":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    letters("qwertzuiop"),
+                    letters("asdfghjkl"),
+                    letters("yxcvbnm")
+                ],
+                spaceTitle: "Leerzeichen"
+            )
+        case "es":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    letters("qwertyuiop"),
+                    letters("asdfghjkl") + ["\u{00F1}"],
+                    letters("zxcvbnm")
+                ],
+                spaceTitle: "espacio"
+            )
+        case "it":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: qwertyRows,
+                spaceTitle: "spazio"
+            )
+        case "pt":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: qwertyRows,
+                spaceTitle: "espa\u{00E7}o"
+            )
+        case "nl":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: qwertyRows,
+                spaceTitle: "spatie"
+            )
+        case "tr":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    letters("qwertyu") + ["\u{0131}", "o", "p"],
+                    letters("asdfghjkl") + ["\u{015F}"],
+                    letters("zxcvbnm") + ["\u{00F6}", "\u{00E7}"]
+                ],
+                spaceTitle: "bo\u{015F}luk"
+            )
+        case "ar":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    ["\u{0636}", "\u{0635}", "\u{062B}", "\u{0642}", "\u{0641}", "\u{063A}", "\u{0639}", "\u{0647}", "\u{062E}", "\u{062D}"],
+                    ["\u{0634}", "\u{0633}", "\u{064A}", "\u{0628}", "\u{0644}", "\u{0627}", "\u{062A}", "\u{0646}", "\u{0645}", "\u{0643}"],
+                    ["\u{0626}", "\u{0621}", "\u{0624}", "\u{0631}", "\u{0649}", "\u{0629}", "\u{0648}", "\u{0632}", "\u{0638}"]
+                ],
+                spaceTitle: "\u{0645}\u{0633}\u{0627}\u{0641}\u{0629}",
+                prefersRightToLeft: true
+            )
+        case "he":
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: [
+                    ["\u{05E7}", "\u{05E8}", "\u{05D0}", "\u{05D8}", "\u{05D5}", "\u{05DF}", "\u{05DD}", "\u{05E4}"],
+                    ["\u{05E9}", "\u{05D3}", "\u{05D2}", "\u{05DB}", "\u{05E2}", "\u{05D9}", "\u{05D7}", "\u{05DC}", "\u{05DA}", "\u{05E3}"],
+                    ["\u{05D6}", "\u{05E1}", "\u{05D1}", "\u{05D4}", "\u{05E0}", "\u{05DE}", "\u{05E6}", "\u{05EA}", "\u{05E5}"]
+                ],
+                spaceTitle: "\u{05E8}\u{05D5}\u{05D5}\u{05D7}",
+                prefersRightToLeft: true
+            )
+        default:
+            return KeyboardLanguageLayout(
+                languageIdentifier: identifier,
+                alphabeticRows: qwertyRows,
+                spaceTitle: "space"
+            )
+        }
+    }
+
+    public static let defaultNumericRows: [[String]] = [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+        ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
+    ]
+
+    public static let defaultSymbolRows: [[String]] = [
+        ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
+        ["_", "\\", "|", "~", "<", ">", "\u{20AC}", "\u{00A3}", "\u{00A5}", "\u{2022}"]
+    ]
+
+    private static var qwertyRows: [[String]] {
+        [letters("qwertyuiop"), letters("asdfghjkl"), letters("zxcvbnm")]
+    }
+
+    private static func letters(_ text: String) -> [String] {
+        text.map(String.init)
+    }
+
+    private static func normalizedIdentifier(_ primaryLanguage: String?, preferredLanguages: [String]) -> String {
+        let candidates = [primaryLanguage] + preferredLanguages.map(Optional.some)
+        for candidate in candidates {
+            guard let candidate,
+                  !candidate.isEmpty,
+                  candidate != "und",
+                  candidate != "mul" else {
+                continue
+            }
+            return candidate.replacingOccurrences(of: "_", with: "-")
+        }
+        return "en-US"
+    }
+}
+
+public enum KeyboardTextBehavior {
+    private static let sentenceTerminators: Set<Character> = [".", "!", "?"]
+
+    public static func shouldAutoCapitalize(documentContextBeforeInput: String?) -> Bool {
+        guard let context = documentContextBeforeInput, !context.isEmpty else {
+            return true
+        }
+
+        guard let lastMeaningfulCharacter = context.last(where: { !$0.isWhitespace }) else {
+            return true
+        }
+
+        if context.last == "\n" {
+            return true
+        }
+
+        if let lastCharacter = context.last, !lastCharacter.isWhitespace {
+            return false
+        }
+
+        return sentenceTerminators.contains(lastMeaningfulCharacter)
+    }
+
+    public static func shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: String?) -> Bool {
+        guard let context = documentContextBeforeInput,
+              context.hasSuffix(" ") else {
+            return false
+        }
+
+        let beforeTrailingSpace = context.dropLast()
+        guard let previous = beforeTrailingSpace.last,
+              !previous.isWhitespace else {
+            return false
+        }
+
+        return !sentenceTerminators.contains(previous)
+    }
+}
+
 public enum KeyboardInputMethod {
     public static func resolve(_ input: KeyboardInput, context: KeyboardInputContext) -> KeyboardInputResult {
         switch input {

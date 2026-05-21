@@ -8,13 +8,14 @@ final class HIDKeyboardReportTests: XCTestCase {
         let keyPress = HIDReportBuilder.keyPress(for: "c", activeModifiers: [.command])
 
         XCTAssertEqual(keyPress?.down.bytes, [0x08, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00])
-        XCTAssertEqual(keyPress?.up.bytes, HIDKeyboardReport.empty.bytes)
+        XCTAssertEqual(keyPress?.up.bytes, [0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     }
 
     func testControlOptionTabProducesCombinedModifierAndTabUsageReport() {
         let keyPress = HIDReportBuilder.keyPress(for: .tab, activeModifiers: [.control, .option])
 
         XCTAssertEqual(keyPress?.down.bytes, [0x05, 0x00, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00])
+        XCTAssertEqual(keyPress?.up.bytes, [0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     }
 
     func testEscapeUsageMatchesUSBHIDKeyboardTable() {
@@ -75,8 +76,8 @@ final class HIDKeyboardReportTests: XCTestCase {
 
             XCTAssertEqual(tab.down.bytes, reportBytes(modifiers: modifierCase.byte, usage: HIDKeyboardUsage.tab.rawValue))
             XCTAssertEqual(escape.down.bytes, reportBytes(modifiers: modifierCase.byte, usage: HIDKeyboardUsage.escape.rawValue))
-            XCTAssertEqual(tab.up.bytes, HIDKeyboardReport.empty.bytes)
-            XCTAssertEqual(escape.up.bytes, HIDKeyboardReport.empty.bytes)
+            XCTAssertEqual(tab.up.bytes, reportBytes(modifiers: modifierCase.byte))
+            XCTAssertEqual(escape.up.bytes, reportBytes(modifiers: modifierCase.byte))
         }
     }
 
@@ -91,13 +92,32 @@ final class HIDKeyboardReportTests: XCTestCase {
         }
     }
 
-    func testLetterKeyPressesCarryEveryModifierCombination() throws {
+    func testEveryLetterKeyPressCarriesEveryModifierCombination() throws {
         for modifierCase in allModifierCases {
-            let keyPress = try XCTUnwrap(HIDReportBuilder.keyPress(for: "c", activeModifiers: modifierCase.keys))
+            for scalarValue in UInt8(ascii: "a")...UInt8(ascii: "z") {
+                let character = Character(UnicodeScalar(scalarValue))
+                let keyPress = try XCTUnwrap(HIDReportBuilder.keyPress(for: character, activeModifiers: modifierCase.keys))
+                let expectedUsage = scalarValue - 93
 
-            XCTAssertEqual(keyPress.down.bytes, reportBytes(modifiers: modifierCase.byte, usage: HIDKeyboardUsage.c.rawValue))
-            XCTAssertEqual(keyPress.up.bytes, HIDKeyboardReport.empty.bytes)
+                XCTAssertEqual(
+                    keyPress.down.bytes,
+                    reportBytes(modifiers: modifierCase.byte, usage: expectedUsage),
+                    "Unexpected keyDown report for \(modifierCase.keys) + \(character)"
+                )
+                XCTAssertEqual(
+                    keyPress.up.bytes,
+                    reportBytes(modifiers: modifierCase.byte),
+                    "Unexpected keyUp report for \(modifierCase.keys) + \(character)"
+                )
+            }
         }
+    }
+
+    func testComboKeyReleasePreservesActiveModifiersUntilClearReport() throws {
+        let keyPress = try XCTUnwrap(HIDReportBuilder.keyPress(for: "x", activeModifiers: [.control, .option, .command]))
+
+        XCTAssertEqual(keyPress.down.bytes, reportBytes(modifiers: 0x0D, usage: HIDKeyboardUsage.x.rawValue))
+        XCTAssertEqual(keyPress.up.bytes, reportBytes(modifiers: 0x0D))
     }
 
     func testLetterUsageLookupIsCaseInsensitiveAndRejectsNonLetters() {
