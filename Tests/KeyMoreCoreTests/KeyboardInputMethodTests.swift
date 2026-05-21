@@ -496,6 +496,30 @@ final class KeyboardInputMethodTests: XCTestCase {
         XCTAssertEqual(layout.alphabeticRows[0], ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"])
     }
 
+    func testEnabledLanguageLayoutsFollowIOSOrderThenExposeSupportedFallbacks() {
+        let layouts = KeyboardLanguageLayout.enabledLayouts(
+            primaryLanguage: "mul",
+            preferredLanguages: ["de-DE", "fr-FR", "ja-JP", "en-US"]
+        )
+
+        XCTAssertEqual(layouts.prefix(3).map(\.languageIdentifier), ["de-DE", "fr-FR", "en-US"])
+        XCTAssertTrue(layouts.map(\.languageCode).contains("es"))
+        XCTAssertFalse(layouts.map(\.languageCode).contains("ja"))
+        XCTAssertEqual(Set(layouts.map(\.languageCode)).count, layouts.count)
+    }
+
+    func testNextLanguageLayoutCyclesThroughEnabledLayouts() {
+        let layouts = [
+            KeyboardLanguageLayout.layout(for: "en-US"),
+            KeyboardLanguageLayout.layout(for: "fr-FR"),
+            KeyboardLanguageLayout.layout(for: "de-DE")
+        ]
+
+        XCTAssertEqual(KeyboardLanguageLayout.nextLayout(after: layouts[0], in: layouts), layouts[1])
+        XCTAssertEqual(KeyboardLanguageLayout.nextLayout(after: layouts[2], in: layouts), layouts[0])
+        XCTAssertEqual(KeyboardLanguageLayout.layout(for: "fr-FR").languageSwitchTitle, "FR")
+    }
+
     func testAutoCapitalizationMatchesStockSentenceBoundaries() {
         XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: nil))
         XCTAssertTrue(KeyboardTextBehavior.shouldAutoCapitalize(documentContextBeforeInput: ""))
@@ -517,6 +541,41 @@ final class KeyboardInputMethodTests: XCTestCase {
         XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello"))
         XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello. "))
         XCTAssertFalse(KeyboardTextBehavior.shouldInsertPeriodOnDoubleSpace(documentContextBeforeInput: "Hello  "))
+    }
+
+    func testSwipeResolverCollapsesRepeatedKeysAndMatchesEnglishDictionary() throws {
+        let resolution = try XCTUnwrap(KeyboardSwipeResolver.resolve(
+            path: ["h", "e", "l", "l", "o"],
+            languageIdentifier: "en-US"
+        ))
+
+        XCTAssertEqual(KeyboardSwipeResolver.normalizedSignature(["h", "e", "l", "l", "o"]), ["h", "e", "l", "o"])
+        XCTAssertEqual(resolution, KeyboardSwipeResolution(text: "hello ", isDictionaryMatch: true))
+    }
+
+    func testSwipeResolverUsesActiveLanguageDictionary() throws {
+        let french = try XCTUnwrap(KeyboardSwipeResolver.resolve(
+            path: ["b", "o", "n", "j", "o", "u", "r"],
+            languageIdentifier: "fr-FR"
+        ))
+        let german = try XCTUnwrap(KeyboardSwipeResolver.resolve(
+            path: ["h", "a", "l", "l", "o"],
+            languageIdentifier: "de-DE"
+        ))
+
+        XCTAssertEqual(french, KeyboardSwipeResolution(text: "bonjour ", isDictionaryMatch: true))
+        XCTAssertEqual(german, KeyboardSwipeResolution(text: "hallo ", isDictionaryMatch: true))
+    }
+
+    func testSwipeResolverFallsBackToTraceAndAddsLeadingSpaceInsideWords() throws {
+        let resolution = try XCTUnwrap(KeyboardSwipeResolver.resolve(
+            path: ["x", "y", "z"],
+            languageIdentifier: "en-US",
+            documentContextBeforeInput: "hello"
+        ))
+
+        XCTAssertEqual(resolution, KeyboardSwipeResolution(text: " xyz ", isDictionaryMatch: false))
+        XCTAssertNil(KeyboardSwipeResolver.resolve(path: ["x"], languageIdentifier: "en-US"))
     }
 
     private var commandFallback: KeyResolution {

@@ -53,6 +53,14 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
     public let spaceTitle: String
     public let prefersRightToLeft: Bool
 
+    public var languageCode: String {
+        languageIdentifier.split(separator: "-").first.map(String.init) ?? "en"
+    }
+
+    public var languageSwitchTitle: String {
+        languageCode.uppercased()
+    }
+
     public init(
         languageIdentifier: String,
         alphabeticRows: [[String]],
@@ -75,7 +83,7 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
         for primaryLanguage: String?,
         preferredLanguages: [String] = []
     ) -> KeyboardLanguageLayout {
-        let identifier = normalizedIdentifier(primaryLanguage, preferredLanguages: preferredLanguages)
+        let identifier = normalizedIdentifier(primaryLanguage, preferredLanguages: preferredLanguages) ?? "en-US"
         let languageCode = identifier.split(separator: "-").first.map(String.init) ?? "en"
 
         switch languageCode {
@@ -168,6 +176,40 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
         }
     }
 
+    public static func enabledLayouts(
+        primaryLanguage: String?,
+        preferredLanguages: [String]
+    ) -> [KeyboardLanguageLayout] {
+        let candidates = [primaryLanguage].compactMap { $0 } + preferredLanguages + defaultLanguageIdentifiers
+        var seenCodes = Set<String>()
+        var layouts: [KeyboardLanguageLayout] = []
+
+        for candidate in candidates {
+            guard let identifier = normalizedIdentifier(candidate, preferredLanguages: []) else {
+                continue
+            }
+            let layout = Self.layout(for: identifier)
+            guard supportedLanguageCodes.contains(layout.languageCode), !seenCodes.contains(layout.languageCode) else {
+                continue
+            }
+            seenCodes.insert(layout.languageCode)
+            layouts.append(layout)
+        }
+
+        return layouts.isEmpty ? [Self.layout(for: "en-US")] : layouts
+    }
+
+    public static func nextLayout(
+        after currentLayout: KeyboardLanguageLayout,
+        in layouts: [KeyboardLanguageLayout]
+    ) -> KeyboardLanguageLayout {
+        guard !layouts.isEmpty,
+              let currentIndex = layouts.firstIndex(where: { $0.languageCode == currentLayout.languageCode }) else {
+            return layouts.first ?? Self.layout(for: "en-US")
+        }
+        return layouts[(currentIndex + 1) % layouts.count]
+    }
+
     public static let defaultNumericRows: [[String]] = [
         ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
         ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
@@ -178,6 +220,10 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
         ["_", "\\", "|", "~", "<", ">", "\u{20AC}", "\u{00A3}", "\u{00A5}", "\u{2022}"]
     ]
 
+    public static let defaultLanguageIdentifiers = [
+        "en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "pt-PT", "nl-NL", "tr-TR", "ar-SA", "he-IL"
+    ]
+
     private static var qwertyRows: [[String]] {
         [letters("qwertyuiop"), letters("asdfghjkl"), letters("zxcvbnm")]
     }
@@ -186,7 +232,11 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
         text.map(String.init)
     }
 
-    private static func normalizedIdentifier(_ primaryLanguage: String?, preferredLanguages: [String]) -> String {
+    private static var supportedLanguageCodes: Set<String> {
+        Set(defaultLanguageIdentifiers.compactMap { $0.split(separator: "-").first.map(String.init) })
+    }
+
+    private static func normalizedIdentifier(_ primaryLanguage: String?, preferredLanguages: [String]) -> String? {
         let candidates = [primaryLanguage] + preferredLanguages.map(Optional.some)
         for candidate in candidates {
             guard let candidate,
@@ -197,7 +247,87 @@ public struct KeyboardLanguageLayout: Equatable, Sendable {
             }
             return candidate.replacingOccurrences(of: "_", with: "-")
         }
-        return "en-US"
+        return nil
+    }
+}
+
+public struct KeyboardSwipeResolution: Equatable, Sendable {
+    public let text: String
+    public let isDictionaryMatch: Bool
+
+    public init(text: String, isDictionaryMatch: Bool) {
+        self.text = text
+        self.isDictionaryMatch = isDictionaryMatch
+    }
+}
+
+public enum KeyboardSwipeResolver {
+    public static func resolve(
+        path: [String],
+        languageIdentifier: String,
+        documentContextBeforeInput: String? = nil
+    ) -> KeyboardSwipeResolution? {
+        let signature = normalizedSignature(path)
+        guard signature.count >= 2 else {
+            return nil
+        }
+
+        let languageCode = languageIdentifier.split(separator: "-").first.map(String.init) ?? "en"
+        if let word = dictionary(for: languageCode).first(where: { normalizedSignature(Array($0).map(String.init)) == signature }) {
+            return KeyboardSwipeResolution(
+                text: insertionText(for: word, documentContextBeforeInput: documentContextBeforeInput),
+                isDictionaryMatch: true
+            )
+        }
+
+        let fallback = signature.joined()
+        return KeyboardSwipeResolution(
+            text: insertionText(for: fallback, documentContextBeforeInput: documentContextBeforeInput),
+            isDictionaryMatch: false
+        )
+    }
+
+    public static func normalizedSignature(_ path: [String]) -> [String] {
+        var result: [String] = []
+        for rawKey in path {
+            let key = rawKey.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !key.isEmpty, result.last != key else {
+                continue
+            }
+            result.append(key)
+        }
+        return result
+    }
+
+    private static func insertionText(for word: String, documentContextBeforeInput: String?) -> String {
+        let needsLeadingSpace: Bool
+        if let last = documentContextBeforeInput?.last {
+            needsLeadingSpace = !last.isWhitespace
+        } else {
+            needsLeadingSpace = false
+        }
+        return (needsLeadingSpace ? " " : "") + word + " "
+    }
+
+    private static func dictionary(for languageCode: String) -> [String] {
+        switch languageCode {
+        case "fr":
+            return ["bonjour", "merci", "oui", "non", "clavier", "salut", "monde"]
+        case "de":
+            return ["hallo", "danke", "ja", "nein", "tastatur", "welt", "gut"]
+        case "es":
+            return ["hola", "gracias", "si", "no", "teclado", "mundo"]
+        case "it":
+            return ["ciao", "grazie", "si", "no", "tastiera", "mondo"]
+        case "pt":
+            return ["ola", "obrigado", "sim", "nao", "teclado", "mundo"]
+        case "nl":
+            return ["hallo", "dank", "ja", "nee", "toetsenbord", "wereld"]
+        case "tr":
+            return ["merhaba", "tesekkur", "evet", "hayir", "klavye", "dunya"]
+        default:
+            return ["the", "and", "you", "hello", "world", "keymore", "keyboard", "swift", "swipe", "test", "thanks", "please", "good", "morning", "night", "yes", "no"]
+        }
     }
 }
 

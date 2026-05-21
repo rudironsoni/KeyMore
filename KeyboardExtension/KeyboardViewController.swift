@@ -5,7 +5,7 @@ import UIKit
 import os
 
 private enum KeyboardMetrics {
-    static let keyboardHeight: CGFloat = 272
+    static let keyboardHeight: CGFloat = 312
     static let outerInset: CGFloat = 3
     static let topInset: CGFloat = 6
     static let bottomInset: CGFloat = 6
@@ -60,18 +60,37 @@ private final class KeyMoreKeyboardState: ObservableObject {
     @Published var inputContext = KeyboardInputContext()
     @Published var layoutMode = KeyboardLayoutMode.alphabetic
     @Published var languageLayout = KeyboardLanguageLayout.layout(for: nil)
+    @Published var enabledLanguageLayouts = [KeyboardLanguageLayout.layout(for: "en-US")]
+    @Published var candidates: [String] = []
+    @Published var needsResetShiftState = false
+    @Published var isCapsLocked = false
     @Published var needsInputModeSwitchKey = true
 }
 
 private struct KeyMoreKeyboardActions {
     let specialKey: (SpecialKey) -> Void
     let character: (String) -> Void
-    let shift: () -> Void
+    let shiftState: (KEShiftState) -> Void
     let delete: () -> Void
     let space: () -> Void
     let returnKey: () -> Void
+    let candidate: (Int) -> Void
+    let swipe: ([String]) -> Void
     let switchLayout: (KeyboardLayoutMode) -> Void
     let globe: (UIView, UIEvent) -> Void
+}
+
+private struct SwipeKeyFrame: Equatable {
+    let character: String
+    let frame: CGRect
+}
+
+private struct SwipeKeyFramePreferenceKey: PreferenceKey {
+    static let defaultValue: [SwipeKeyFrame] = []
+
+    static func reduce(value: inout [SwipeKeyFrame], nextValue: () -> [SwipeKeyFrame]) {
+        value.append(contentsOf: nextValue())
+    }
 }
 
 final class KeyboardViewController: UIInputViewController {
@@ -116,10 +135,12 @@ final class KeyboardViewController: UIInputViewController {
             actions: KeyMoreKeyboardActions(
                 specialKey: { [weak self] in self?.handleSpecialKey($0) },
                 character: { [weak self] in self?.handleCharacter($0) },
-                shift: { [weak self] in self?.toggleShift() },
+                shiftState: { [weak self] in self?.handleShiftState($0) },
                 delete: { [weak self] in self?.handleInput(.delete) },
                 space: { [weak self] in self?.handleSpace() },
                 returnKey: { [weak self] in self?.handleInput(.return) },
+                candidate: { [weak self] in self?.handleCandidateSelection($0) },
+                swipe: { [weak self] in self?.handleSwipe($0) },
                 switchLayout: { [weak self] in self?.switchLayout(to: $0) },
                 globe: { [weak self] from, event in self?.handleInputModeList(from: from, with: event) }
             )
@@ -150,6 +171,7 @@ final class KeyboardViewController: UIInputViewController {
         let character = displayCharacter(rawCharacter)
         logger.info("character key press key=\(character, privacy: .public) fullAccess=\(self.hasFullAccess, privacy: .public)")
         handleInput(.character(rawCharacter))
+        resetOneShotShiftIfNeeded()
     }
 
     private func handleSpace() {
@@ -163,6 +185,23 @@ final class KeyboardViewController: UIInputViewController {
 
         textDocumentProxy.deleteBackward()
         textDocumentProxy.insertText(". ")
+        syncLanguageAndTextBehavior()
+    }
+
+    private func handleSwipe(_ path: [String]) {
+        guard keyboardState.layoutMode == .alphabetic,
+              keyboardState.inputContext.activeModifiers.isEmpty,
+              let resolution = KeyboardSwipeResolver.resolve(
+                path: path,
+                languageIdentifier: keyboardState.languageLayout.languageIdentifier,
+                documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput
+              ) else {
+            return
+        }
+
+        logger.info("swipe path=\(path.joined(separator: ">"), privacy: .public) text=\(resolution.text, privacy: .public) dictionary=\(resolution.isDictionaryMatch, privacy: .public)")
+        textDocumentProxy.insertText(resolution.text)
+        keyboardState.candidates = swipeCandidates(for: resolution)
         syncLanguageAndTextBehavior()
     }
 
@@ -199,8 +238,11 @@ final class KeyboardViewController: UIInputViewController {
         }
     }
 
-    private func toggleShift() {
-        handleInput(.shift)
+    private func handleShiftState(_ shiftState: KEShiftState) {
+        var context = keyboardState.inputContext
+        context.isShifted = shiftState != .off
+        keyboardState.inputContext = context
+        keyboardState.isCapsLocked = shiftState == .capsLock
     }
 
     private func switchLayout(to mode: KeyboardLayoutMode) {
@@ -210,13 +252,37 @@ final class KeyboardViewController: UIInputViewController {
         keyboardState.inputContext = context
     }
 
+    private func handleCandidateSelection(_ index: Int) {
+        guard keyboardState.candidates.indices.contains(index) else {
+            return
+        }
+
+        let candidate = keyboardState.candidates[index]
+        if let languageLayout = keyboardState.enabledLanguageLayouts.first(where: { $0.languageSwitchTitle == candidate }) {
+            keyboardState.languageLayout = languageLayout
+            keyboardState.layoutMode = .alphabetic
+            updateCandidates()
+            syncLanguageAndTextBehavior()
+            return
+        }
+
+        textDocumentProxy.insertText(candidate.hasSuffix(" ") ? candidate : candidate + " ")
+        syncLanguageAndTextBehavior()
+    }
+
     private func syncLanguageAndTextBehavior() {
-        let nextLanguageLayout = KeyboardLanguageLayout.layout(
-            for: textDocumentProxy.documentInputMode?.primaryLanguage ?? primaryLanguage,
+        let enabledLayouts = KeyboardLanguageLayout.enabledLayouts(
+            primaryLanguage: textDocumentProxy.documentInputMode?.primaryLanguage ?? primaryLanguage,
             preferredLanguages: Locale.preferredLanguages
         )
-        if nextLanguageLayout != keyboardState.languageLayout {
-            keyboardState.languageLayout = nextLanguageLayout
+        if enabledLayouts != keyboardState.enabledLanguageLayouts {
+            keyboardState.enabledLanguageLayouts = enabledLayouts
+            updateCandidates()
+        }
+        if !enabledLayouts.contains(where: { $0.languageCode == keyboardState.languageLayout.languageCode }),
+           let firstLayout = enabledLayouts.first {
+            keyboardState.languageLayout = firstLayout
+            updateCandidates()
         }
 
         guard keyboardState.layoutMode == .alphabetic else {
@@ -233,6 +299,30 @@ final class KeyboardViewController: UIInputViewController {
         var context = keyboardState.inputContext
         context.isShifted = shouldShift
         keyboardState.inputContext = context
+    }
+
+    private func resetOneShotShiftIfNeeded() {
+        guard !keyboardState.isCapsLocked, keyboardState.inputContext.isShifted else {
+            return
+        }
+
+        var context = keyboardState.inputContext
+        context.isShifted = false
+        keyboardState.inputContext = context
+        keyboardState.needsResetShiftState = true
+    }
+
+    private func updateCandidates() {
+        keyboardState.candidates = keyboardState.enabledLanguageLayouts.map(\.languageSwitchTitle)
+    }
+
+    private func swipeCandidates(for resolution: KeyboardSwipeResolution) -> [String] {
+        let languageCandidates = keyboardState.enabledLanguageLayouts.map(\.languageSwitchTitle)
+        let word = resolution.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !word.isEmpty else {
+            return languageCandidates
+        }
+        return [word] + languageCandidates
     }
 
     private func displayCharacter(_ character: String) -> String {
@@ -279,9 +369,12 @@ final class KeyboardViewController: UIInputViewController {
 private struct KeyMoreKeyboardView: View {
     @ObservedObject var state: KeyMoreKeyboardState
     let actions: KeyMoreKeyboardActions
+    @State private var swipeKeyFrames: [SwipeKeyFrame] = []
+    @State private var swipePath: [String] = []
 
     var body: some View {
         VStack(spacing: KeyboardMetrics.rowSpacing) {
+            candidatesView
             specialRow
             switch state.layoutMode {
             case .alphabetic:
@@ -307,6 +400,22 @@ private struct KeyMoreKeyboardView: View {
         .padding(.bottom, KeyboardMetrics.bottomInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.keyMoreKeyboardBackground)
+        .coordinateSpace(name: "keyboard")
+        .onPreferenceChange(SwipeKeyFramePreferenceKey.self) { frames in
+            swipeKeyFrames = frames
+        }
+        .simultaneousGesture(swipeGesture)
+    }
+
+    private var candidatesView: some View {
+        KECandidatesView(
+            candidates: Binding(
+                get: { state.candidates },
+                set: { state.candidates = $0 }
+            ),
+            onSelectHandler: actions.candidate
+        )
+        .background(Color.keyMoreKeyboardBackground)
     }
 
     private var specialRow: some View {
@@ -326,27 +435,41 @@ private struct KeyMoreKeyboardView: View {
     private func characterRow(_ characters: [String], horizontalInset: CGFloat = 0) -> some View {
         row(horizontalInset: horizontalInset) {
             ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
-                keyButton(title: displayCharacter(character), style: .character) {
-                    actions.character(character)
-                }
+                characterKeyButton(character)
             }
         }
     }
 
     private func shiftRow(_ characters: [String]) -> some View {
         row {
-            commandButton(symbolName: "shift", weight: 1.45, isSelected: state.inputContext.isShifted) {
-                actions.shift()
-            }
+            shiftButton
             ForEach(Array(characters.enumerated()), id: \.offset) { _, character in
-                keyButton(title: displayCharacter(character), style: .character) {
-                    actions.character(character)
-                }
+                characterKeyButton(character)
             }
-            commandButton(symbolName: "delete.left", weight: 1.45) {
+            repeatableCommandButton(symbolName: "delete.left", weight: 1.45) {
                 actions.delete()
             }
         }
+    }
+
+    private var shiftButton: some View {
+        KEShiftButton(
+            width: KeyboardMetrics.baseKeyWidth * 1.45,
+            height: KeyboardMetrics.keyHeight,
+            cornerRadius: KeyboardMetrics.keyCornerRadius,
+            foregroundInactiveColor: KeyboardKeyStyle.action.foregroundColor(isSelected: state.inputContext.isShifted),
+            foregroundActiveColor: KeyboardKeyStyle.action.foregroundColor(isSelected: true),
+            backgroundInactiveColor: KeyboardKeyStyle.action.backgroundColor(isSelected: state.inputContext.isShifted),
+            backgroundActiveColor: KeyboardKeyStyle.action.backgroundColor(isSelected: true),
+            needsResetShiftState: Binding(
+                get: { state.needsResetShiftState },
+                set: { state.needsResetShiftState = $0 }
+            ),
+            model: KEShiftButtonModel(updateShiftStateHandler: actions.shiftState)
+        )
+        .font(.system(size: 18, weight: .regular))
+        .shadow(color: .keyMoreKeyShadow, radius: 0, x: 0, y: 1)
+        .accessibilityLabel("shift")
     }
 
     private func alternateShiftRow(toggleTitle: String, targetMode: KeyboardLayoutMode) -> some View {
@@ -355,11 +478,9 @@ private struct KeyMoreKeyboardView: View {
                 actions.switchLayout(targetMode)
             }
             ForEach(Array(state.languageLayout.punctuationRow.enumerated()), id: \.offset) { _, character in
-                keyButton(title: character, style: .character) {
-                    actions.character(character)
-                }
+                characterKeyButton(character)
             }
-            commandButton(symbolName: "delete.left", weight: 1.45) {
+            repeatableCommandButton(symbolName: "delete.left", weight: 1.45) {
                 actions.delete()
             }
         }
@@ -446,6 +567,22 @@ private struct KeyMoreKeyboardView: View {
         .accessibilityLabel(title)
     }
 
+    private func characterKeyButton(_ character: String) -> some View {
+        keyButton(title: displayCharacter(character), style: .character) {
+            actions.character(character)
+        }
+        .background(swipeFramePreference(for: character))
+    }
+
+    private func swipeFramePreference(for character: String) -> some View {
+        GeometryReader { proxy in
+            Color.clear.preference(
+                key: SwipeKeyFramePreferenceKey.self,
+                value: [SwipeKeyFrame(character: character.lowercased(), frame: proxy.frame(in: .named("keyboard")))]
+            )
+        }
+    }
+
     private func commandButton(
         symbolName: String,
         weight: CGFloat,
@@ -467,12 +604,80 @@ private struct KeyMoreKeyboardView: View {
         .accessibilityLabel(symbolName)
     }
 
+    private func repeatableCommandButton(
+        symbolName: String,
+        weight: CGFloat,
+        action: @escaping () -> Void
+    ) -> some View {
+        KERepeatableCommandButton(
+            image: Image(systemName: symbolName),
+            width: KeyboardMetrics.baseKeyWidth * weight,
+            height: KeyboardMetrics.keyHeight,
+            cornerRadius: KeyboardMetrics.keyCornerRadius,
+            foregroundColor: KeyboardKeyStyle.action.foregroundColor(isSelected: false),
+            backgroundInactiveColor: KeyboardKeyStyle.action.backgroundColor(isSelected: false),
+            backgroundActiveColor: .keyMorePressedKeyBackground,
+            model: KERepeatableCommandButtonModel(onCommandHandler: action)
+        )
+        .font(.system(size: 18, weight: .regular))
+        .shadow(color: .keyMoreKeyShadow, radius: 0, x: 0, y: 1)
+        .accessibilityLabel(symbolName)
+    }
+
     private func fixedWidth(for weight: CGFloat) -> CGFloat? {
         weight == 1 ? nil : KeyboardMetrics.baseKeyWidth * weight
     }
 
     private func displayCharacter(_ character: String) -> String {
         state.inputContext.isShifted ? character.uppercased() : character.lowercased()
+    }
+
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .named("keyboard"))
+            .onChanged { value in
+                appendSwipeKey(at: value.location)
+            }
+            .onEnded { _ in
+                finishSwipe()
+            }
+    }
+
+    private func appendSwipeKey(at location: CGPoint) {
+        guard state.layoutMode == .alphabetic,
+              let character = swipeCharacter(at: location),
+              swipePath.last != character else {
+            return
+        }
+        swipePath.append(character)
+    }
+
+    private func finishSwipe() {
+        defer { swipePath.removeAll() }
+        guard state.layoutMode == .alphabetic, swipePath.count >= 2 else {
+            return
+        }
+        actions.swipe(swipePath)
+    }
+
+    private func swipeCharacter(at location: CGPoint) -> String? {
+        if let containingFrame = swipeKeyFrames.first(where: { $0.frame.contains(location) }) {
+            return containingFrame.character
+        }
+
+        return swipeKeyFrames
+            .map { frame in
+                (character: frame.character, distance: frame.frame.centerDistance(to: location))
+            }
+            .filter { $0.distance <= 28 }
+            .min { $0.distance < $1.distance }?
+            .character
+    }
+}
+
+private extension CGRect {
+    func centerDistance(to point: CGPoint) -> CGFloat {
+        let center = CGPoint(x: midX, y: midY)
+        return hypot(center.x - point.x, center.y - point.y)
     }
 }
 
